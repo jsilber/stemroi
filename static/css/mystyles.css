@@ -1,0 +1,32 @@
+
+/* Always set the map height explicitly to define the size of the div element that contains the map. */
+#alltabs {
+    height: 70%;
+}
+
+#map {
+    height: 70%;
+
+}
+
+/* Optional: Makes the sample page fill the window. */
+html, body {
+    /*height: 100%;*/
+    margin: 0;
+    padding: 0;
+}
+select, option {
+    width: 400px;
+}
+
+canvas {
+    width: 1px;
+    height: 1px;
+}
+
+#south_side {
+    width:500px;
+    height: 30%;
+    padding:0;
+    margin:0;
+}

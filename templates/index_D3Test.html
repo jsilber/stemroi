@@ -1,0 +1,147 @@
+<!--<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3: A bar chart with divs</title>
+        <script type="text/javascript" src="../static/d3/d3.js"></script>
+        <style type="text/css">
+
+            div.bar {
+                display: inline-block;
+                width: 20px;
+                height: 75px;   /* Gets overriden by D3-assigned height below */
+                margin-right: 2px;
+                background-color: teal;
+            }
+
+        </style>
+    </head>
+    <body>
+
+        <div id ="south_side">
+           <div id="whatever">
+                <script type="text/javascript">
+
+                    var dataset2 = [ 1,2,3,4,5];
+
+
+                    d3.select("south_side").append("whatever")
+                        .data(dataset2)
+                        .enter()
+                        .append("div")
+                        .attr("class", "bar")
+                        .style("height", function(d) {
+                            var barHeight = d * 5;
+                            return barHeight + "px";
+                        });
+
+                </script>
+
+           </div>
+           <div id="d3chart1">
+                <script type="text/javascript">
+
+                    var dataset = [ 5, 10, 13, 19, 21, 25, 22, 18, 15, 13,
+                                    11, 12, 15, 20, 18, 17, 16, 18, 23, 25 ];
+
+
+                    d3.select("south_side").append("d3chart1")
+                        .data(dataset)
+                        .enter()
+                        .append("div")
+                        .attr("class", "bar")
+                        .style("height", function(d) {
+                            var barHeight = d * 5;
+                            return barHeight + "px";
+                        });
+                </script>
+            </div>
+      </div>
+    </body>
+</html>-->
+
+
+<!--var dataset = [
+              {"tuition": 24034.0, "university_name": "University of Alaska Anchorage"},
+              {"tuition": 18104.0, "university_name": "University of Alaska Fairbanks"},
+              {"tuition": 17978.0, "university_name": "University of Alaska Southeast"},
+              {"tuition": 31010.0, "university_name": "Alaska Pacific University"},
+              {"tuition": 32275.0, "university_name": "Charter College-Anchorage"},
+              {"tuition": 34380.0, "university_name": "Berea College"}
+            ];
+-->
+
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style> /* set the CSS */
+
+.bar { fill: steelblue; }
+
+</style>
+<body>
+
+<!-- load the d3.js library -->
+<script type="text/javascript" src="../static/d3/d3.js"></script>
+<script>
+
+// set the dimensions and margins of the graph
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+// set the ranges
+var x = d3.scaleBand()
+          .range([0, width])
+          .padding(0.1);
+var y = d3.scaleLinear()
+          .range([height, 0]);
+
+// append the svg object to the body of the page
+// append a 'group' element to 'svg'
+// moves the 'group' element to the top left margin
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+// get the data
+d3.csv("sales.csv", function(error, data) {
+  if (error) throw error;
+
+  // format the data
+  data.forEach(function(d) {
+    d.sales = +d.sales;
+  });
+
+  // Scale the range of the data in the domains
+  x.domain(data.map(function(d) { return d.salesperson; }));
+  y.domain([0, d3.max(data, function(d) { return d.sales; })]);
+
+  // append the rectangles for the bar chart
+  svg.selectAll(".bar")
+      .data(data)
+    .enter().append("rect")
+      .attr("class", "bar")
+      .attr("x", function(d) { return x(d.salesperson); })
+      .attr("width", x.bandwidth())
+      .attr("y", function(d) { return y(d.sales); })
+      .attr("height", function(d) { return height - y(d.sales); });
+
+  // add the x Axis
+  svg.append("g")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
+
+  // add the y Axis
+  svg.append("g")
+      .call(d3.axisLeft(y));
+
+});
+
+</script>
+</body>
+
+

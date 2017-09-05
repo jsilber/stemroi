@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!--meta charset tag is needed to correctly parse D3 functions and data-->
+    <meta charset="utf-8">
+    <!--Links to jQuery CSS, this project's CSS, Google jQuery CDN library, and local jQuery minified API-->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/mystyles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/easyui.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.easyui.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='d3/d3.min.js') }}"></script>
+<style>
+    #banner {
+        width:100%;
+        height:90px;
+        background: url("{{ url_for('static', filename='img/LOGO.jpg') }}");
+        background-color: #4D4D4D;
+        background-repeat: no-repeat;
+        padding:0;
+        margin:0;
+    }
+</style>
+
+</head>
+
+<body class="easyui-layout" >
+    <div id="banner" data-options="region:'north', split:false"></div>
+
+    <div id="ddcontrols" data-options="region:'west',split:true" style="width:435px;">
+        <h4>Enter some introductory text to help the user....Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate.
+        </h4>
+        <fieldset>
+            <!--Create dropdown form fields-->
+            <label>Choose a state:<div id="statesdrop">
+                <select id="statelist"></select>
+            </div></label><br />
+
+            <label>Choose a university:<div id="universitydrop">
+                <select id="unislist" ></select>
+            </div></label><br />
+
+            <label>Choose a major:<div id="majordrop"></div></label><br />
+                <select id="majorlist" ></select>
+        </fieldset>
+
+    <script>
+        // Populates 'statelist' select list (upper-left)
+        // Using getJSON method to call list of states.
+
+        $.getJSON("/api/statesdd", null, function(data) {
+            // Remove all <option> child tags. -- WHY DID I WRITE THIS??
+            // Call statelist form field created above and clear out dropdown
+            // https://stackoverflow.com/questions/9909326/clear-dropdownlist-with-jquery
+            $("#statelist").empty();
+            // Adds a blank value to the beginning of the dropdown list
+            $("#statelist").append($("<option></option>").text(" ").val(" "));
+            $("#unislist").empty();
+            $("#majorlist").empty();
+
+            // Iterates through a collection http://api.jquery.com/jquery.each/
+            $.each(data, function(index, item) {
+                $("#statelist").append( // Append an object to the inside of the select box
+                    $("<option></option>")
+                    .text(item.state)
+                    .val(item.fips)
+                );
+            });
+        });
+
+
+
+        // Populates 'unislist' select list (middle-left) based on state dropdown
+        $('#statelist').change(function() {
+            $.ajax({
+                url: '/api/universitydd',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json',
+                // Get state selected and convert the object to a string
+                // https://stackoverflow.com/questions/6323338/jquery-ajax-posting-json-to-webservice
+                data: JSON.stringify({ fips: $('#statelist :selected').val()}),
+                success: function(result) {
+                    // Clear out dropdown of universities and majors if statelist changes
+                    $("#unislist").empty();
+                    $("#unislist").append($("<option></option>").text(" ").val(" "));
+                    $("#majorlist").empty();
+                    $("#majorlist").append($("<option></option>").text(" ").val(" "));
+                    $('#roi_by_state').datagrid('loadData', {"total":0,"rows":[]});
+                    // (Re-)populate based on state selection
+                    $.each(result, function(index, item) {
+                        $("#unislist").append( // Append an object to the inside of the select box
+                            $("<option></option>")
+                            .text(item.university_name)
+                            .val(item.unitid)
+                        );
+                    });
+                },
+                error: function(e) {
+                    console.log(e);
+                }
+             });
+        });
+
+
+        // Populates 'majorlist' select list (bottom-left)
+        $('#unislist').change(function() {
+            $.ajax({
+                url: '/api/majordd',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify({ unitid: $('#unislist :selected').val()}),
+                success: function(result) {
+                    // Clear out dropdown
+                    $("#majorlist").empty();
+                    $("#majorlist").append($("<option></option>").text(" ").val(" "));
+                    $('#roi_by_state').datagrid('loadData', {"total":0,"rows":[]});
+                    // Re-populate based on university selection
+                    $.each(result, function(index, item) {
+                        $("#majorlist").append(
+                            $("<option></option>")
+                            .text(item.major)
+                            .val(item.cip)
+                        );
+                    });
+
+                },
+                error: function(e) {
+                    console.log(e);
+                }
+             });
+        });
+
+        $('#majorlist').change(function() {
+            var majorListURL = '/api/roimajorbystate/' + $('#majorlist :selected').val();
+            //http://www.jeasyui.com/forum/index.php?topic=4216.0
+            $('#roi_by_state').datagrid({
+                url: majorListURL,
+                method: 'get',
+                columns: [[
+                    { field:'State', title:'State', width:100 },
+                    { field:'AveTuition', title:'Average Tuition ($)', width:105, align:'right' },
+                    { field:'AveStart', title:'Average Starting Salary ($)', width:145, align:'right' },
+                    { field:'AvePeak', title:'Average Peak Salary ($)', width:135, align:'right' },
+                    { field:'10YRROI', title:'10-Year ROI', width:85, align:'right' }
+                ]]
+            });
+        });
+
+    </script>
+
+
+
+    </div>
+
+    <div id="allmaps" data-options="region:'center', split:true" class="easyui-tabs">
+
+            <!--University points map-->
+            <div id="map" title="University Locations" data-options="closable:true"></div>
+            <!--Percentage of graduates in 2015 vs 2014 Job Opportunities map-->
+            <div title="Percentage of Conferred Degrees vs Job Opportunities " data-options="closable:true">
+                <h5>Placeholder</h5>
+            </div>
+
+            <!--ROI 10 years after graduation map-->
+            <div title="ROI 10 Years after Graduation" data-options="closable:true">
+                <h5>Placeholder</h5>
+            </div>
+
+
+    </div>
+
+    <script type="text/javascript">
+        //Now we create tabs programatically, we catch the 'onSelect' event also.
+
+        $(function(){
+            var tabs = $('#allmaps').tabs().tabs('tabs');
+            for(var i=0; i<tabs.length; i++){
+                tabs[i].panel('options').tab.unbind().bind('mouseenter',{index:i},function(e){
+                    $('#allmaps').tabs('select', e.data.index);
+                });
+            }
+        });
+
+    </script>
+
+    <script>
+            var infowindow = null;
+            var map = null;
+            var prev_infoWindow = false;
+
+            function initMap() {
+
+                var mapOpts = {
+                  zoom: 3,
+                  center: new google.maps.LatLng(49,-110)
+                };
+
+                map = new google.maps.Map(document.getElementById("map"), mapOpts);
+
+                /* Google Map - Silver basemap styling*/
+                var visStyles = [
+                    {
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#f5f5f5"
+                      }
+                    ]
+                  },
+                  {
+                    "elementType": "labels.icon",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#616161"
+                      }
+                    ]
+                  },
+                  {
+                    "elementType": "labels.text.stroke",
+                    "stylers": [
+                      {
+                        "color": "#f5f5f5"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "administrative.land_parcel",
+                    "elementType": "labels",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "administrative.land_parcel",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#bdbdbd"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "poi",
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#eeeeee"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "poi",
+                    "elementType": "labels.text",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "poi",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#757575"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "poi.business",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "poi.park",
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#e5e5e5"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "poi.park",
+                    "elementType": "labels.text",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "poi.park",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#9e9e9e"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road",
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#ffffff"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road.arterial",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#757575"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road.highway",
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#dadada"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road.highway",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#616161"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road.local",
+                    "elementType": "labels",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road.local",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#9e9e9e"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "transit.line",
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#e5e5e5"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "transit.station",
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#eeeeee"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "water",
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#c9c9c9"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "water",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#9e9e9e"
+                      }
+                    ]
+                  }
+                ];
+                map.setOptions({styles: visStyles});
+                console.log("Got here!");
+            }
+
+            function createMarker(point,info,map,icon) {
+
+                var markerOpts = {
+                    position: point,
+                    map: map,
+                    icon: icon
+                };
+
+                var marker = new google.maps.Marker(markerOpts);
+
+                var infoWindowOpts = { content: info };
+                var infoWindow = new google.maps.InfoWindow(infoWindowOpts);
+
+
+                //https://stackoverflow.com/questions/2223574/google-maps-auto-close-open-infowindows
+                google.maps.event.addListener(marker, 'click', function() {
+                    if( prev_infoWindow ) {
+                        prev_infoWindow.close();
+                    }
+
+                    prev_infoWindow = infoWindow;
+                    infoWindow.open(map, marker);
+                });
+            }
+
+            $.getJSON("/api/unis", null, function(result) {
+                var icon = { path: google.maps.SymbolPath.CIRCLE,
+                            fillOpacity: 1.0,
+                            fillColor: "red",
+                            strokeOpacity: 1.0,
+                            strokeColor: "black",
+                            strokeWeight: 0.5,
+                            scale: 4
+                    };
+
+                for (var i = 0; i < result.length; i++) {
+                    var lat = result[i].latitude;
+                    var long = result[i].longitude;
+                    var latLng = new google.maps.LatLng(lat, long);
+
+                    var pt = {
+                        "uname": result[i].university_name,
+                        "tuition": result[i].tuition
+                        //Need to add Starting and Peak Salary, and 10-year ROI for selected major
+                    };
+
+                    createMarker(latLng, 'University: <strong>'
+                                    + pt.uname + '</strong><br />'
+                                    + 'Tuition: $ <strong>'
+                                    + pt.tuition
+                                    + '<br />',
+                                    map, icon);
+                }
+            });
+
+
+        </script>
+
+    <div id="south_side" data-options="region:'south',split:true" style="height:25%">
+        <!--http://www.jeasyui.com/demo/main/index.php?plugin=Tabs&-->
+        <div id="d3chartstable" style="width:49%;height:25%;float:left;padding:1px;overflow-y:hidden;position:fixed" class"easyui-tabs">
+            <div title="Compare Tuition for Universities in Selected State" data-options="closable:true" style="padding:20px;;overflow-y:hidden">
+                D3 Code goes here! <!--Put D3 code here-->
+            </div>
+
+            <div title="Compare Job Opportunities for Your Major in All States" data-options="closable:true" style="padding:20px;overflow-y:visible">
+                D3 Code goes here!
+            </div>
+        </div>
+        <div id="roitable" style="width:49%;float:right;padding:1px">
+
+            <div title="Comparison of ROI in other states:">
+                <table id="roi_by_state" class="easyui-datagrid"
+                        <data-options="singleSelect:true,collapsible:true,url:api/roimajorbystate,method:'get'">
+                <h5>Salary information is not available for all majors in all states.</h5>
+                <thead>
+                    <tr>
+                        <th data-options="field:'State',width:100">State</th>
+                        <th data-options="field:'AveTuition',width:105, align:'right'">Average Tuition ($)</th>
+                        <th data-options="field:'AveStart',width:145,align:'right'">Average Starting Salary ($)</th>
+                        <th data-options="field:'AvePeak',width:135,align:'right'">Average Peak Salary ($)</th>
+                        <th data-options="field:'10YRROI',width:85, align:'right'">10-Year ROI</th>
+                    </tr>
+                </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+    //Now we create tabs programatically, we catch the 'onSelect' event also.
+    $(function(){
+        var tabs = $('#d3chartstable').tabs().tabs('tabs');
+        for(var i=0; i<tabs.length; i++){
+            tabs[i].panel('options').tab.unbind().bind('mouseenter',{index:i},function(e){
+                $('#d3chartstable').tabs('select', e.data.index);
+            });
+        }
+    });
+
+    </script>
+
+
+    <!--Google Maps API key for dev environment-->
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAdPspKiEU_oN3E9aqYOsKY5kB72Uh4XvE&callback=initMap">
+    </script>
+  </body>
+</html>

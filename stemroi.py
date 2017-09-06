@@ -12,6 +12,10 @@ db = MySQL(app)
 def index():
     return render_template("index.html")
 
+@app.route("/playground")
+def playground():
+    return render_template("d3_playground.html")
+
 #Flask function for Google Map University Points
 @app.route('/api/unis', methods=['GET'])
 def allUniversities():
@@ -84,7 +88,7 @@ def selectMajor():
     if request.is_json:
         # Get JSON sent
         content = request.get_json()
-        print(content)
+        #print(content)
         # Check to see if the field(s) we are looking for exist
         #COME BACK TO THIS
         if 'unitid' in content:
@@ -125,21 +129,21 @@ def avgROI(cip):
     payload = []
     for row in rows:
         all_greater_than_zero = True
-        plrow = {'State':str(row[0]), 'AveTuition': '${0:.2f}'.format(row[1])}
+        plrow = {'State':str(row[0]), 'AveTuition': '${0:,.2f}'.format(row[1])}
         if row[2] == 0.00:
             plrow['AveStart'] = 'N/A'
             all_greater_than_zero = False
         else:
-            plrow['AveStart'] = '${0:.2f}'.format(row[2])
+            plrow['AveStart'] = '${0:,.2f}'.format(row[2])
         if row[3] == 0.00:
             plrow['AvePeak'] = 'N/A'
             all_greater_than_zero = False
         else:
-            plrow['AvePeak'] = '${0:.2f}'.format(row[3])
+            plrow['AvePeak'] = '${0:,.2f}'.format(row[3])
         if row[4] == 0.00 or not all_greater_than_zero:
             plrow['10YRROI'] = 'N/A'
         else:
-            plrow['10YRROI'] = '{0:.2f}'.format(row[4])
+            plrow['10YRROI'] = '{0:,.2f}'.format(row[4])
         # (((ROUND(AVG(js.a_pct10),2))+(((ROUND(AVG(js.a_pct90),2))-(ROUND(AVG(js.a_pct10),2)))/43)*10))/(ROUND(AVG(u.tuition),2)) as roi10yr
         payload.append(plrow)
         # See https://stackoverflow.com/questions/455612/limiting-floats-to-two-decimal-points
@@ -147,7 +151,7 @@ def avgROI(cip):
     return jsonify(payload), 200
 
 
-#Flask function for D3 Compare Tuition within State selected
+#Flask function for D3 bar chart - Compare Tuition within State selected
 @app.route('/api/compare_tuition', methods=['POST'])
 def tuitionChart():
     if request.is_json:
@@ -171,6 +175,39 @@ def tuitionChart():
             return jsonify({"errors":"Malformed JSON or incorrect format"}), 400
     else:
         return jsonify({"errors":"Malformed JSON or incorrect format"}), 400
+    return jsonify(payload), 200
+
+
+
+#Flask function for D3 bar chart - Projected Job Opportunities for each state
+@app.route('/api/projected_jobs', methods=['POST'])
+def jobChart():
+    if request.is_json:
+        # Get JSON sent
+        content = request.get_json()
+        #print(content)
+        # Check to see if the field(s) we are looking for exist
+        if 'cip' in content:
+            # Get the state value
+            cip = content['cip']
+
+            cur = db.connection.cursor()
+            # SUM returns Decimal when summing ints; must be cast back to int
+            # (since we know it will be a positive int, we cast as signed int).
+            # See https://stackoverflow.com/questions/17006049/mysqldb-return-decimal-for-a-sum-of-int
+            cur.execute("SELECT s.area_name, CAST(SUM(js.proj_jobs) AS SIGNED) as jobs \
+                FROM stemroidb.state_abrev s, stemroidb.major m, stemroidb.major_job mj, stemroidb.jobs_salaries js  \
+                WHERE s.state_fips =  js.state_fips and m.cip = mj.cip and mj.soc = js.soc and m.cip = '{0}' \
+                GROUP BY s.area_name".format(cip))
+
+            payload = []
+            for row in cur:
+                payload.append({'area_name':row[0], 'jobs':row[1]})
+        else:
+            return jsonify({"errors":"Malformed JSON or incorrect format"}), 400
+    else:
+        return jsonify({"errors":"Malformed JSON or incorrect format"}), 400
+    print(payload)
     return jsonify(payload), 200
 
 

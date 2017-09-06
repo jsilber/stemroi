@@ -6,15 +6,22 @@
 
 #map {
     height: 70%;
-
 }
 
-/* Optional: Makes the sample page fill the window. */
+#south_side {
+    width:500px;
+    /*height: 30%;*/
+    padding:0;
+    margin:0;
+}
+
 html, body {
     /*height: 100%;*/
     margin: 0;
     padding: 0;
+    /*font: 10px sans-serif;*/
 }
+
 select, option {
     width: 400px;
 }
@@ -24,9 +31,53 @@ canvas {
     height: 1px;
 }
 
-#south_side {
-    width:500px;
-    height: 30%;
-    padding:0;
-    margin:0;
+/* D3 Styles */
+.axis path, .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+.bar {
+    fill: steelblue;
+}
+
+.bar:hover {
+    fill: orange ;
+}
+
+.x.axis path {
+    display: none;
+}
+
+.d3-tip {
+    line-height: 1;
+    font-weight: bold;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    border-radius: 2px;
+    z-index: 9;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+    box-sizing: border-box;
+    display: inline;
+    font-size: 8px;
+    width: 100%;
+    line-height: 1;
+    color: rgba(0, 0, 0, 0.8);
+    content: "\25BC";
+    position: absolute;
+    text-align: center;
+    z-index: 9;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+    margin: -1px 0 0 0;
+    top: 100%;
+    left: 0;
+    z-index: 9;
 }

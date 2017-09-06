@@ -3,12 +3,15 @@
 <head>
     <!--meta charset tag is needed to correctly parse D3 functions and data-->
     <meta charset="utf-8">
-    <!--Links to jQuery CSS, this project's CSS, Google jQuery CDN library, and local jQuery minified API-->
+    <!--Links to this project's CSS, jQuery CSS, Google API, jQuery minified library, D3, and custom D3 library from http://labratrevenge.com/d3-tip/-->
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/mystyles.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/easyui.css') }}">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.easyui.min.js') }}"></script>
-    <script type="text/javascript" src="{{ url_for('static', filename='d3/d3.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/d3.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/Cagedd3tips/index.js') }}"></script>
+
+
 <style>
     #banner {
         width:100%;
@@ -142,7 +145,7 @@
                     { field:'AveTuition', title:'Average Tuition ($)', width:105, align:'right' },
                     { field:'AveStart', title:'Average Starting Salary ($)', width:145, align:'right' },
                     { field:'AvePeak', title:'Average Peak Salary ($)', width:135, align:'right' },
-                    { field:'10YRROI', title:'10-Year ROI', width:85, align:'right' }
+                    { field:'10YRROI', title:'10-Year ROI Score', width:150, align:'right' }
                 ]]
             });
         });
@@ -192,7 +195,7 @@
             function initMap() {
 
                 var mapOpts = {
-                  zoom: 3,
+                  zoom: 4,
                   center: new google.maps.LatLng(49,-110)
                 };
 
@@ -404,7 +407,7 @@
                   }
                 ];
                 map.setOptions({styles: visStyles});
-                console.log("Got here!");
+
             }
 
             function createMarker(point,info,map,icon) {
@@ -465,18 +468,17 @@
 
         </script>
 
-    <div id="south_side" data-options="region:'south',split:true" style="height:25%">
+    <div id="south_side" data-options="region:'south',split:true" style="height:30%">
         <!--http://www.jeasyui.com/demo/main/index.php?plugin=Tabs&-->
-        <div id="d3chartstable" style="width:49%;height:25%;float:left;padding:1px;overflow-y:hidden;position:fixed" class"easyui-tabs">
-            <div title="Compare Tuition for Universities in Selected State" data-options="closable:true" style="padding:20px;;overflow-y:hidden">
-                D3 Code goes here! <!--Put D3 code here-->
+        <div id="d3chartstable" style="width:60%;height:100%; float:left;padding:1px;overflow-y:hidden;position:fixed" class"easyui-tabs">
+            <div id="comptuition" title="Compare Tuition in Selected State" data-options="closable:true" style="height:100%; padding:20px">
+                <div id="tuition_chart"></div>
             </div>
-
-            <div title="Compare Job Opportunities for Your Major in All States" data-options="closable:true" style="padding:20px;overflow-y:visible">
+            <div title="Compare Job Opportunities for Your Major in All States" data-options="closable:true" style="padding:20px">
                 D3 Code goes here!
             </div>
         </div>
-        <div id="roitable" style="width:49%;float:right;padding:1px">
+        <div id="roitable" style="width:39%;float:right;padding:1px;overflow-y:visible">
 
             <div title="Comparison of ROI in other states:">
                 <table id="roi_by_state" class="easyui-datagrid"
@@ -488,14 +490,100 @@
                         <th data-options="field:'AveTuition',width:105, align:'right'">Average Tuition ($)</th>
                         <th data-options="field:'AveStart',width:145,align:'right'">Average Starting Salary ($)</th>
                         <th data-options="field:'AvePeak',width:135,align:'right'">Average Peak Salary ($)</th>
-                        <th data-options="field:'10YRROI',width:85, align:'right'">10-Year ROI</th>
+                        <th data-options="field:'10YRROI',width:100, align:'right'">10-Year ROI Score</th>
                     </tr>
                 </thead>
                 </table>
             </div>
         </div>
     </div>
+    <script language="javascript">
+
+        // set the dimensions and margins of the graph
+        var margin = {top: 50, right: 20, bottom: 10, left: 80},
+            width = 500 - margin.left - margin.right,
+            height = 200 - margin.top - margin.bottom;
+
+
+
+        // set the ranges
+        var x = d3.scaleBand()
+                  .range([0, width])
+                  .padding(0.1);
+        var y = d3.scaleLinear()
+                  .range([height, 0]);
+
+        //Create custom tooltips based on this example: http://bl.ocks.org/Caged/6476579
+        //Wrap text: https://groups.google.com/forum/?fromgroups=#!topic/d3-js/GgFTf24ltjc
+        var tip = d3.tip()
+            .attr('class', 'd3-tip')
+            .offset([-10, 0])
+            .html(function(d) {
+                return "<strong>University:</strong> <span style='color:white'>" + d.university_name + "</span><br>" +
+                    "<strong>Tuition:</strong> <span style='color:lightblue'>" + "$" + d.tuition + "</span>";
+                //return d.university_name;
+            });
+
+        // append the svg object to the body of the page
+        // append a 'group' element to 'svg'
+        // moves the 'group' element to the top left margin
+        var svg = d3.select("#tuition_chart").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+            .attr("transform",
+                  "translate(" + margin.left + "," + margin.top + ")");
+
+
+        svg.call(tip);
+
+        var data = [
+                      {"tuition": 24034.0, "university_name": "University of Alaska Anchorage"},
+                      {"tuition": 18104.0, "university_name": "University of Alaska Fairbanks"},
+                      {"tuition": 17978.0, "university_name": "University of Alaska Southeast"},
+                      {"tuition": 31010.0, "university_name": "Alaska Pacific University"},
+                      {"tuition": 32275.0, "university_name": "Charter College-Anchorage"},
+                      {"tuition": 34380.0, "university_name": "Berea College"}
+                    ];
+
+        // Scale the range of the data in the domains
+        x.domain(data.map(function(d) { return d.university_name; }));
+        y.domain([0, d3.max(data, function(d) { return d.tuition; })]);
+
+        // append the rectangles for the bar chart
+        svg.selectAll(".bar")
+            .data(data)
+            .enter().append("rect")
+              .attr("class", "bar")
+              .attr("x", function(d) { return x(d.university_name); })
+              .attr("width", x.bandwidth())
+              .attr("y", function(d) { return y(d.tuition); })
+              .attr("height", function(d) { return height - y(d.tuition); })
+              .on('mouseover', tip.show)
+              .on('mouseout', tip.hide);
+
+        // add the x Axis
+        svg.append("g")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x))
+            //Removes the university name text on x-axis after axis is created. //https://stackoverflow.com/questions/19787925/create-a-d3-axis-without-tick-labels
+            .selectAll("text").remove();
+
+        // add the y Axis
+            svg.append("g")
+                .call(d3.axisLeft(y));
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x",0 - (height / 2))
+                .attr("dy", "2em")
+                .style("text-anchor", "middle")
+                .text("Tuition (2015)");
+
+    </script>
+
     <script type="text/javascript">
+
     //Now we create tabs programatically, we catch the 'onSelect' event also.
     $(function(){
         var tabs = $('#d3chartstable').tabs().tabs('tabs');
@@ -505,7 +593,6 @@
             });
         }
     });
-
     </script>
 
 

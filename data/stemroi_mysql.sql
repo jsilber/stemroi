@@ -1,5 +1,3 @@
-CREATE DATABASE  IF NOT EXISTS `stemroidb` /*!40100 DEFAULT CHARACTER SET utf8 */;
-USE `stemroidb`;
 -- MySQL dump 10.13  Distrib 5.7.17, for macos10.12 (x86_64)
 --
 -- Host: localhost    Database: stemroidb
@@ -217,17 +215,17 @@ UNLOCK TABLES;
 DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `averages_by_state`(IN cip VARCHAR(15))
 BEGIN
-	SELECT s.area_name, 
-					ROUND(AVG(u.tuition),0) as tuition, 
-                    ROUND(AVG(js.a_pct10),0) as startSal, 
-                    ROUND(AVG(js.a_pct90),0) as endSal, 
-                    (((ROUND(AVG(js.a_pct10),2))+(((ROUND(AVG(js.a_pct90),2))-(ROUND(AVG(js.a_pct10),2)))/43)*10))/(ROUND(AVG(u.tuition),2)) as roi10yr 
-        FROM stemroidb.state_abrev s, stemroidb.university u, stemroidb.university_major um, stemroidb.major m, stemroidb.major_job mj, stemroidb.jobs_salaries js 
-        WHERE s.state_fips =  js.state_fips and 
-					s.state_fips = u.state_fips and 
-                    u.unitid = um.unitid and 
-                    um.cip = m.cip and 
-                    m.cip = mj.cip and 
+    SELECT s.area_name,
+                    ROUND(AVG(u.tuition),0) as tuition,
+                    ROUND(AVG(js.a_pct10),0) as startSal,
+                    ROUND(AVG(js.a_pct90),0) as endSal,
+                    (((ROUND(AVG(js.a_pct10),2))+(((ROUND(AVG(js.a_pct90),2))-(ROUND(AVG(js.a_pct10),2)))/43)*10))/(ROUND(AVG(u.tuition),2)) as roi10yr
+        FROM stemroidb.state_abrev s, stemroidb.university u, stemroidb.university_major um, stemroidb.major m, stemroidb.major_job mj, stemroidb.jobs_salaries js
+        WHERE s.state_fips =  js.state_fips and
+                    s.state_fips = u.state_fips and
+                    u.unitid = um.unitid and
+                    um.cip = m.cip and
+                    m.cip = mj.cip and
                     mj.soc = js.soc and
                     m.cip = cip
         GROUP BY s.area_name;
@@ -247,4 +245,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2017-09-06 17:45:44
+-- Dump completed on 2017-09-07 14:33:00

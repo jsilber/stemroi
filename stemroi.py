@@ -19,22 +19,22 @@ def playground():
 #Flask function for Google Map University Points
 @app.route('/api/unis', methods=['GET'])
 def allUniversities():
-    # Get a connected cursor
+    #Get a connected cursor
     cur = db.connection.cursor()
-    # Execute query (from employees sample database: https://github.com/datacharmer/test_db)
+    #Execute query (from employees sample database: https://github.com/datacharmer/test_db)
     cur.execute('''SELECT * FROM university''')
-    # Extract row headers
+    #Extract row headers
     row_headers = [x[0] for x in cur.description]
-    # Fetch all from the cursor
+    #Fetch all from the cursor
     rv = cur.fetchall()
-    # Create an empty list we can append to
+    #Create an empty list we can append to
     payload = []
-    # See https://stackoverflow.com/questions/43796423/python-converting-mysql-query-result-to-json
+    #Based on https://stackoverflow.com/questions/43796423/python-converting-mysql-query-result-to-json
     for result in rv:
         payload.append(dict(zip(row_headers,result)))
 
-    # Convert list of dict to JSON and send response code 200
-    # (see https://en.wikipedia.org/wiki/List_of_HTTP_status_codes and look for 200)
+    #Convert list of dict to JSON and send response code 200
+    #Based on https://en.wikipedia.org/wiki/List_of_HTTP_status_codes. Look for 200
     return jsonify(payload), 200
 
 
@@ -195,7 +195,7 @@ def jobChart():
             # SUM returns Decimal when summing ints; must be cast back to int
             # (since we know it will be a positive int, we cast as signed int).
             # See https://stackoverflow.com/questions/17006049/mysqldb-return-decimal-for-a-sum-of-int
-            cur.execute("SELECT s.area_name, CAST(SUM(js.proj_jobs) AS SIGNED) as jobs \
+            cur.execute("SELECT s.area_name, CAST(SUM(js.annual_open) AS SIGNED) as jobs \
                 FROM stemroidb.state_abrev s, stemroidb.major m, stemroidb.major_job mj, stemroidb.jobs_salaries js  \
                 WHERE s.state_fips =  js.state_fips and m.cip = mj.cip and mj.soc = js.soc and m.cip = '{0}' \
                 GROUP BY s.area_name".format(cip))

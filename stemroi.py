@@ -129,17 +129,17 @@ def avgROI(cip):
     payload = []
     for row in rows:
         all_greater_than_zero = True
-        plrow = {'State':str(row[0]), 'AveTuition': '${0:,.2f}'.format(row[1])}
+        plrow = {'State':str(row[0]), 'AveTuition': int(row[1])}
         if row[2] == 0.00:
             plrow['AveStart'] = 'N/A'
             all_greater_than_zero = False
         else:
-            plrow['AveStart'] = '${0:,.2f}'.format(row[2])
+            plrow['AveStart'] = int(row[2])
         if row[3] == 0.00:
             plrow['AvePeak'] = 'N/A'
             all_greater_than_zero = False
         else:
-            plrow['AvePeak'] = '${0:,.2f}'.format(row[3])
+            plrow['AvePeak'] = int(row[3]) #'${0:,.2f}'.format(row[3])
         if row[4] == 0.00 or not all_greater_than_zero:
             plrow['10YRROI'] = 'N/A'
         else:
@@ -165,12 +165,12 @@ def tuitionChart():
 
             cur = db.connection.cursor()
 
-            cur.execute("SELECT u.university_name, u.tuition \
+            cur.execute("SELECT u.university_name, u.tuition, u.estimate \
                 FROM stemroidb.state_abrev s, stemroidb.university u \
                 WHERE u.state_fips = s.state_fips and s.state_fips = '{0}'".format(fips))
             payload = []
             for row in cur:
-                payload.append({'university_name':row[0], 'tuition':row[1]})
+                payload.append({'university_name':row[0], 'tuition':row[1], 'estimate':row[2]})
         else:
             return jsonify({"errors":"Malformed JSON or incorrect format"}), 400
     else:

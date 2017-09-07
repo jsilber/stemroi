@@ -210,7 +210,60 @@ def jobChart():
     print(payload)
     return jsonify(payload), 200
 
-
+# Endpoint for percentage of graduates vs open jobs
+@app.route('/api/grads/<cip>', methods=['GET'])
+def jobsPercent(cip):
+    #print(content)
+    if cip:
+        # Prepare two cursors
+        cur_degrees = db.connection.cursor()
+        cur_jobs = db.connection.cursor()
+        # Find number of job openings by major
+        cur_jobs.execute("SELECT s.area_name, SUM(js.annual_open) \
+                        FROM stemroidb.state_abrev s, \
+                            stemroidb.university u, \
+                            stemroidb.university_major um, \
+                            stemroidb.major m, \
+                            stemroidb.major_job mj, \
+                            stemroidb.jobs j, \
+                            stemroidb.jobs_salaries js \
+                        WHERE s.state_fips = u.state_fips \
+                            and u.unitid = um.unitid \
+                            and um.cip = m.cip \
+                            and m.cip = mj.cip \
+                            and mj.soc = j.soc \
+                            and j.soc = js.soc \
+                            and js.state_fips = s.state_fips \
+                            and m.cip = '{0}' \
+                        GROUP BY s.area_name \
+                        ORDER BY s.area_name".format(cip))
+        payload = []
+        # Loop through job openings cursor
+        for row_jobs in cur_jobs:
+            # If the number of job openings is zero, don't calcualte
+            if row_jobs[1] == 0:
+                # Set job percentage to zero
+                payload.apend({'area_name':row_jobs[0], 'jobs_percent':0.0})
+            else:
+                # If number of job openings is not zero, find conferred
+                # degrees by major and state (via the job openings cursor)
+                cur_degrees.execute("SELECT (SUM(um.conferred_degrees)) \
+                                    FROM stemroidb.state_abrev s, \
+            	                        stemroidb.university u, \
+            	                        stemroidb.university_major um \
+                                    WHERE s.state_fips = u.state_fips \
+            	                        and u.unitid = um.unitid \
+                                        and um.cip = '{0}' \
+                                        and s.area_name = '{1}' \
+                                    GROUP BY s.state_fips \
+                                    ORDER BY s.area_name".format(cip, row_jobs[0]))
+                # Calculate jobs percentage
+                payload.append({'area_name':row_jobs[0], 'jobs_percent': float(((cur_degrees.fetchone()[0]/row_jobs[1])*100))})
+    else:
+        # If cip is not provided
+        return jsonify({"errors":"Missing CIP in URL"}), 400
+    print(payload)
+    return jsonify(payload), 200
 
 if __name__ == "__main__":
     app.run(debug=True)

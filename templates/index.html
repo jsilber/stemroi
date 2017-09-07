@@ -459,14 +459,14 @@
                         "tuition": result[i].tuition
                         //Need to add Starting and Peak Salary, and 10-year ROI for selected major
                     };
-                    /*
+
                     createMarker(latLng, 'University: <strong>'
                                     + pt.uname + '</strong><br />'
                                     + 'Tuition: $ <strong>'
                                     + pt.tuition
                                     + '<br />',
                                     map, icon);
-                    */
+
                 }
             });
         </script>
@@ -507,8 +507,6 @@
 
     <!--Populates D3 Compare Tuition bar chart based on state dropdown -->
     <script language="javascript">
-        console.log($("#roitable").width());
-
         // Populates D3 Compare Tuition bar chart based on state dropdown
         $('#statelist').change(function() {
             //Clear SVG canvas before drawing (in case user reselects )

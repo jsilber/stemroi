@@ -656,9 +656,8 @@
                         .attr('class', 'd3-tip')
                         .offset([-10, 0])
                         .html(function(dT) {
-                            return "<strong>University:</strong> <span style='color:white'>" + dT.university_name + "</span><br>" +
-                                "<strong>Tuition: </strong> <span style='color:lightblue'>" + "$" + dT.tuition + "</span><br>" +
-                                "<strong>Estimated: </strong> <span style='color:white'>" + dT.estimate + "</span>";
+                            return "<strong>University:</strong> <span style='color:lightblue'>" + dT.university_name + "</span><br>" +
+                                "<strong>" + dT.tuition_source + "</strong> <span style='color:lightblue'>" + "$" + dT.tuition + "</span>";
                         });
 
                     // append the svg object to the body of the page
@@ -768,7 +767,7 @@
                         .attr('class', 'd3-tip')
                         .offset([-10, 0])
                         .html(function(dJ) {
-                            return "<strong>State:</strong> <span style='color:white'>" + dJ.area_name + "</span><br>" +
+                            return "<strong>State:</strong> <span style='color:lightblue'>" + dJ.area_name + "</span><br>" +
                                 "<strong>Projected Job Openings (2014): </strong> <span style='color:lightblue'>" + dJ.jobs + "</span>";
                         });
 

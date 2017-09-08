@@ -8,7 +8,6 @@ class PrefixMiddleware(object):
         self.prefix = prefix
 
     def __call__(self, environ, start_response):
-
         if environ['PATH_INFO'].startswith(self.prefix):
             environ['PATH_INFO'] = environ['PATH_INFO'][len(self.prefix):]
             environ['SCRIPT_NAME'] = self.prefix
@@ -186,7 +185,11 @@ def tuitionChart():
                 WHERE u.state_fips = s.state_fips and s.state_fips = '{0}'".format(fips))
             payload = []
             for row in cur:
-                payload.append({'university_name':row[0], 'tuition':row[1], 'estimate':row[2]})
+                if row[2] == 'Y':
+                    tuition_source = 'Tuition (estimated):'
+                else:
+                    tuition_source = 'Tuition (validated):'
+                payload.append({'university_name':row[0], 'tuition':row[1], 'tuition_source':tuition_source})
         else:
             return jsonify({"errors":"Malformed JSON or incorrect format"}), 400
     else:
@@ -226,55 +229,47 @@ def jobChart():
     #print(payload)
     return jsonify(payload), 200
 
+
 # Endpoint for percentage of graduates vs open jobs
 @app.route('/api/grads/<cip>', methods=['GET'])
 def jobsPercent(cip):
     #print(content)
-    if cip:
-        # Prepare two cursors
-        cur_degrees = db.connection.cursor()
-        cur_jobs = db.connection.cursor()
+    if 'cip':
+        cur = db.connection.cursor()
+
+        # Replace null value with 0:
+        # https://stackoverflow.com/questions/3532776/replace-null-with-0-in-mysql
         # Find number of job openings by major
-        cur_jobs.execute("SELECT s.area_name, SUM(js.annual_open) \
-                        FROM stemroidb.state_abrev s, \
-                            stemroidb.university u, \
-                            stemroidb.university_major um, \
-                            stemroidb.major m, \
-                            stemroidb.major_job mj, \
-                            stemroidb.jobs j, \
-                            stemroidb.jobs_salaries js \
-                        WHERE s.state_fips = u.state_fips \
-                            and u.unitid = um.unitid \
-                            and um.cip = m.cip \
-                            and m.cip = mj.cip \
-                            and mj.soc = j.soc \
-                            and j.soc = js.soc \
-                            and js.state_fips = s.state_fips \
-                            and m.cip = '{0}' \
-                        GROUP BY s.area_name \
-                        ORDER BY s.area_name".format(cip))
+        cur.execute("SELECT t1.state_fips, t1.area_name, t1.cd, t2.jobs, IFNULL(((t1.cd/t2.jobs)*100),0) AS percentJobs \
+        FROM \
+        	(SELECT s.state_fips, s.area_name, (SUM(um.conferred_degrees)) AS cd \
+        	FROM stemroidb.state_abrev s, \
+        		stemroidb.university u, \
+        		stemroidb.university_major um,\
+                stemroidb.major m \
+        	WHERE s.state_fips = u.state_fips \
+        		and u.unitid = um.unitid \
+                and um.cip = m.cip \
+        		and m.cip = '{0}' \
+            GROUP BY s.state_fips) t1 \
+        INNER JOIN \
+            (SELECT js.state_fips, (SUM(js.annual_open)) as jobs \
+        	FROM \
+        		stemroidb.major_job mj, \
+        		stemroidb.jobs j, \
+        		stemroidb.jobs_salaries js \
+            WHERE \
+        		mj.soc = j.soc \
+        		and j.soc = js.soc \
+        		and mj.cip = '{0}' \
+            GROUP BY js.state_fips) t2 \
+        ON t1.state_fips = t2.state_fips".format(cip))
+
         payload = []
         # Loop through job openings cursor
-        for row_jobs in cur_jobs:
-            # If the number of job openings is zero, don't calcualte
-            if row_jobs[1] == 0:
-                # Set job percentage to zero
-                payload.apend({'area_name':row_jobs[0], 'jobs_percent':0.0})
-            else:
-                # If number of job openings is not zero, find conferred
-                # degrees by major and state (via the job openings cursor)
-                cur_degrees.execute("SELECT (SUM(um.conferred_degrees)) \
-                                    FROM stemroidb.state_abrev s, \
-            	                        stemroidb.university u, \
-            	                        stemroidb.university_major um \
-                                    WHERE s.state_fips = u.state_fips \
-            	                        and u.unitid = um.unitid \
-                                        and um.cip = '{0}' \
-                                        and s.area_name = '{1}' \
-                                    GROUP BY s.state_fips \
-                                    ORDER BY s.area_name".format(cip, row_jobs[0]))
-                # Calculate jobs percentage
-                payload.append({'area_name':row_jobs[0], 'jobs_percent': float(((cur_degrees.fetchone()[0]/row_jobs[1])*100))})
+        for row in cur:
+            payload.append({'area_name':row[1], 'jobs_percent':float(row[4])})
+
     else:
         # If cip is not provided
         return jsonify({"errors":"Missing CIP in URL"}), 400

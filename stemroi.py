@@ -57,7 +57,7 @@ def selectUnis():
     if request.is_json:
         # Get JSON sent
         content = request.get_json()
-        print(content)
+        #print(content)
         # Check to see if the field(s) we are looking for exist
         if 'fips' in content:
             # Get the state value
@@ -207,7 +207,7 @@ def jobChart():
             return jsonify({"errors":"Malformed JSON or incorrect format"}), 400
     else:
         return jsonify({"errors":"Malformed JSON or incorrect format"}), 400
-    print(payload)
+    #print(payload)
     return jsonify(payload), 200
 
 # Endpoint for percentage of graduates vs open jobs
@@ -262,7 +262,7 @@ def jobsPercent(cip):
     else:
         # If cip is not provided
         return jsonify({"errors":"Missing CIP in URL"}), 400
-    print(payload)
+    #print(payload)
     return jsonify(payload), 200
 
 if __name__ == "__main__":

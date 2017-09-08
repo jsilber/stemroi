@@ -50,7 +50,7 @@
         // Populates 'statelist' select list (upper-left)
         // Using getJSON method to call list of states.
 
-        $.getJSON("/api/statesdd", null, function(data) {
+        $.getJSON("/stemroi/api/statesdd", null, function(data) {
             // Remove all <option> child tags. -- WHY DID I WRITE THIS??
             // Call statelist form field created above and clear out dropdown
             // https://stackoverflow.com/questions/9909326/clear-dropdownlist-with-jquery
@@ -77,7 +77,7 @@
         // Populates 'unislist' select list (middle-left) based on state dropdown
         $('#statelist').change(function() {
             $.ajax({
-                url: '/api/universitydd',
+                url: '/stemroi/api/universitydd',
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'application/json',
@@ -110,7 +110,7 @@
         // Populates 'majorlist' select list (bottom-left)
         $('#unislist').change(function() {
             $.ajax({
-                url: '/api/majordd',
+                url: '/stemroi/api/majordd',
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'application/json',
@@ -137,7 +137,7 @@
         });
 
         $('#majorlist').change(function() {
-            var majorListURL = '/api/roimajorbystate/' + $('#majorlist :selected').val();
+            var majorListURL = '/stemroi/api/roimajorbystate/' + $('#majorlist :selected').val();
             //http://www.jeasyui.com/forum/index.php?topic=4216.0
             $('#roi_by_state').datagrid({
                 url: majorListURL,
@@ -441,7 +441,7 @@
                 });
             }
 
-            $.getJSON("/api/unis", null, function(result) {
+            $.getJSON("/stemroi/api/unis", null, function(result) {
                 var icon = { path: google.maps.SymbolPath.CIRCLE,
                             fillOpacity: 1.0,
                             fillColor: "red",
@@ -629,7 +629,7 @@
 
             //Get state value and create bar chart
             $.ajax({
-                url: '/api/compare_tuition',
+                url: '/stemroi/api/compare_tuition',
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'application/json',
@@ -739,7 +739,7 @@
 
             //Get state value and create bar chart
             $.ajax({
-                url: '/api/projected_jobs',
+                url: '/stemroi/api/projected_jobs',
                 type: 'POST',
                 dataType: 'json',
                 contentType: 'application/json',

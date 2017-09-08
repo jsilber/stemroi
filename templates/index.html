@@ -10,6 +10,7 @@
     <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.easyui.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/d3.min.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='js/Cagedd3tips/index.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='js/charts.js') }}"></script>
 
 
 <style>
@@ -625,7 +626,7 @@
         $('#statelist').change(function() {
             //Clear SVG canvas before drawing (in case the user reselects a major )
             //https://stackoverflow.com/questions/29758385/clear-d3-js-charts-before-loading-new-chart
-            d3.select("#tuition_chart").selectAll("svg").remove();
+            //d3.select("#tuition_chart").selectAll("svg").remove();
 
             //Get state value and create bar chart
             $.ajax({
@@ -637,7 +638,8 @@
                 // https://stackoverflow.com/questions/6323338/jquery-ajax-posting-json-to-webservice
                 data: JSON.stringify({ fips: $('#statelist :selected').val()}),
                 success: function(dataT) {
-
+                    generateChart(dataT, "#tuition_chart", "Tuition (2015)", "Tuition by University in ", '#statelist :selected', "");
+                    /*
                     // set the dimensions and margins of the graph
                     var marginT = {top: 50, right: 20, bottom: 10, left: 80},
                         widthT = $("#d3chartstable").width()-30 - marginT.left - marginT.right,
@@ -714,6 +716,7 @@
                         .style("font-size", "16px")
                         .style("font-weight", "bold")
                         .text("Tuition by University in " + $('#statelist :selected').text());
+                    */
                 },
 
 
@@ -735,7 +738,7 @@
             //Clear SVG canvas before drawing (in case user reselects )
             //https://stackoverflow.com/questions/29758385/clear-d3-js-charts-before-loading-new-chart
 
-            d3.select("#jobs_chart").selectAll("svg").remove();
+            //d3.select("#jobs_chart").selectAll("svg").remove();
 
             //Get state value and create bar chart
             $.ajax({
@@ -749,7 +752,8 @@
                 data: JSON.stringify({ cip: $('#majorlist :selected').val()}),
 
                 success: function(dataJ) {
-
+                    generateChart(dataJ, "#jobs_chart", "Job Openings (2014)", "Jobs for ", '#majorlist :selected', " Majors by State");
+                    /*
                     // set the dimensions and margins of the graph
                     var marginJ = {top: 50, right: 20, bottom: 10, left: 80},
                         widthJ = $("#d3chartstable").width()-30 - marginJ.left - marginJ.right,
@@ -826,7 +830,7 @@
                         .style("font-weight", "bold")
                         //Add chart title based on major dropdown selected
                         .text("Jobs for " + $('#majorlist :selected').text() + " Majors by State");
-
+                    */
                 },
 
 

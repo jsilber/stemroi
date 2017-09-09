@@ -212,8 +212,8 @@ def jobChart():
 
             cur = db.connection.cursor()
             # SUM returns Decimal when summing ints; must be cast back to int
-            # (since we know it will be a positive int, we cast as signed int).
-            # See https://stackoverflow.com/questions/17006049/mysqldb-return-decimal-for-a-sum-of-int
+            # (since it will be a positive int, cast as a "signed" int).
+            # Based on https://stackoverflow.com/questions/17006049/mysqldb-return-decimal-for-a-sum-of-int
             cur.execute("SELECT s.area_name, CAST(SUM(js.annual_open) AS SIGNED) as jobs \
                 FROM stemroidb.state_abrev s, stemroidb.major m, stemroidb.major_job mj, stemroidb.jobs_salaries js  \
                 WHERE s.state_fips =  js.state_fips and m.cip = mj.cip and mj.soc = js.soc and m.cip = '{0}' \
@@ -273,7 +273,7 @@ def jobsPercent(cip):
     else:
         # If cip is not provided
         return jsonify({"errors":"Missing CIP in URL"}), 400
-    #print(payload)
+    # print(payload)
     return jsonify(payload), 200
 
 if __name__ == "__main__":

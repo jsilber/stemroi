@@ -51,6 +51,9 @@ a2enmod ssl
 # Enable mod_rewrite
 # Source: https://www.digitalocean.com/community/tutorials/how-to-rewrite-urls-with-mod_rewrite-for-apache-on-ubuntu-16-04
 a2enmod rewrite
+# Enable mod_headers
+# Source: https://serverfault.com/questions/848615/installation-of-mod-headers-c-not-successful
+a2enmod headers
 
 # Install MySQL
 # Source: https://www.digitalocean.com/community/tutorials/how-to-install-mysql-on-ubuntu-16-04
@@ -184,6 +187,12 @@ WSGIScriptAlias /stemroi /var/www/stemroi/wsgi.py
         Allow from all
     </Files>
 </Directory>
+
+# Source: https://yoast.com/prevent-site-being-indexed/
+# Before the closing </VirtualHost>, add the following:
+
+# jsilber: Prevent search engine indexing
+Header set X-Robots-Tag "noindex, nofollow"
 
 # Save and quit the file--press Esc and then:
 :wq!

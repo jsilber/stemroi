@@ -1,0 +1,58 @@
+# Services in Homebrew
+# NOTE: Use run instead of start--start makes the service start and start at login; run
+# only runs it now.
+# Using Homebrew (brew) to list all services, start a services and stop a service:
+brew services list
+brew services run mysql
+brew services stop mysql
+
+# virtualenv and virtualenvwrapper have been installed. virtualenvwrapper makes using
+# virtualenv easier--much easier, in my opinion. 
+# A default PROJECT_HOME has been setup on your system, which is in ~/Documents/projects.
+# The following commands are what you will use primarily for interacting with 
+# virtualenvwrapper.
+
+# To list all projects in your PROJECT_HOME:
+workon
+
+# To swith virtualenvs to on of your projects:
+workon <project_name>
+
+# To exist the current virtualenv and get back to your default command-line environment:
+deactivate
+
+# To make a new Python 2 project in PROJECT_HOME:
+mkproject <project_name>
+
+# To make a new Python 3 project in PROJECT_HOME:
+mkproject -p /usr/local/bin/python3 <project_name
+
+# Use pip for installing modules in each virtualenv--here are some pip commands:
+# Search for a module:
+pip search <module_name>
+
+# List installed modules:
+pip list
+
+# List installed modules and versions:
+pip freeze
+
+# Make a requirements.txt based on all installed modules and versions:
+pip freeze > requirements.txt
+
+# Install module:
+pip install <module_name>
+
+# Install modules from requirements.txt:
+pip install -r requirements.txt
+
+# Uninstall module:
+pip uninstall <module_name>
+
+# Important for the above tools:
+Homebrew:           https://brew.sh
+                    https://en.wikipedia.org/wiki/Homebrew_(package_management_software)
+                    https://github.com/Homebrew/homebrew-services
+virtualenv:         https://virtualenv.pypa.io/en/latest/reference/
+virtualenvwrapper:  http://virtualenvwrapper.readthedocs.io/en/latest/command_ref.html
+pip:                https://pip.pypa.io//en/latest/reference/

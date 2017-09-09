@@ -167,7 +167,7 @@
             <!--University points map-->
             <div id="map" title="University Locations" data-options="closable:true"></div>
             <!--Percentage of graduates in 2015 vs 2014 Job Opportunities map-->
-            <div id="gradmap" title="Graduates vs Available Jobs" data-options="closable:true" style="height:100%; padding:20px"></div>
+            <div id="gradmap" title="Graduates vs Available Jobs" data-options="closable:true" style="height:100%; padding:20px"><h5>Percentage of Job Market Saturation for Selected Major. Add description here...(Lower% = Ferwer conferred degress vs available job openings. Higher % = Job Market Saturated)</h5></div>
 
             <!--ROI 10 years after graduation map-->
             <div title="ROI 10 Years after Graduation" data-options="closable:true"></div>
@@ -480,6 +480,7 @@
     //Clear SVG canvas before drawing (in case the user reselects a major )
     //https://stackoverflow.com/questions/29758385/clear-d3-js-charts-before-loading-new-chart
     //d3.select("#gradMap").selectAll("svg").remove();
+
     $('#majorlist').change(function() {
         d3.select("#gradmap").selectAll("svg").remove();
         //Load in graduate data enpoint
@@ -498,38 +499,44 @@
 
                 //Width and height
             	var w = 1028;
-            	var h = 764;
+            	var h = 768;
 
                 //Define map projection
             	var projection = d3.geoAlbersUsa()
-            	   .translate([w/2, h/2])
-            	   .scale([1200]);
+            	   .translate([w/2, h/2]) // translate to center of screen
+            	   .scale([1200]);        // scale things down so see entire US
 
                 //Define path generator
             	var path = d3.geoPath()
             	   .projection(projection);
 
-                //Define quantize scale to sort data values into buckets of color
-               	var color = d3.scaleQuantize()
-               		.range(["rgb(237,248,233)","rgb(186,228,179)","rgb(116,196,118)","rgb(49,163,84)","rgb(0,109,44)"]);
+                //Define linear scale to sort data values into buckets of color
+               	var color = d3.scaleQuantile()
+                    .domain([
+                        d3.min(dataG, function(d) { return d.jobs_percent; }),
+                        d3.max(dataG, function(d) { return d.jobs_percent; })
+                    ])
+               		//.range(["rgb(237,248,233)","rgb(186,228,179)","rgb(49,163,84)","rgb(0,109,44)"]);
+                    .range(["rgb(0,109,44)","rgb(49,163,84)","rgb(186,228,179)","rgb(237,248,233)"]);
                		//Colors derived from ColorBrewer, by Cynthia Brewer, and included in
                		//https://github.com/d3/d3-scale-chromatic
-
+                console.log(d3.min(dataG, function(d) { return d.jobs_percent; }));
+                console.log(d3.max(dataG, function(d) { return d.jobs_percent; }));
                 //Create SVG element
-            	var svgG = d3.select("#gradmap")
-            		.append("svg")
-            		.attr("width", w)
-            		.attr("height", h);
+                var svgG = d3.select("#gradmap")
+                    .append("svg")
+                    .attr("width", w)
+                    .attr("height", h);
 
                 //Load in grad endpoint data
                 d3.json(gradURL, function(dataG) {
-
+                    /*
                     //Set input domain for color scale
             		color.domain([
             			d3.min(dataG, function(d) { return d.jobs_percent; }),
             			d3.max(dataG, function(d) { return d.jobs_percent; })
             	    ]);
-
+                    */
 
                     //Load in GeoJSON data
                     var url = ("{{ url_for('static', filename='js/us-states.json') }}");
@@ -561,7 +568,7 @@
     							}
     						}
     					}
-
+                        var legendScale = []
                 	    //Bind data and create one path per GeoJSON feature
     					svgG.selectAll("path")
     					    .data(json.features)
@@ -577,12 +584,39 @@
     						   		return color(value);
     					   		} else {
     					   			//If value is undefined…
-    						   		return "#ccc";
+    						   		return "rgb(200,200,200)";
     					   		}
     					   });
+                        /*
+                        var legendText = ["High Job Opportunities","","","Low Job Opportunities","NA"];
+                        var legendMax = d3.max(dataG, function(d) { return d.jobs_percent; });
+                        // Modified Legend Code from Mike Bostock: http://bl.ocks.org/mbostock/3888852
+                        var legend = d3.select("#gradmap").append("svg")
+                            //.attr("top", 100)
+                            //.attr("left", 100)
+                            //.attr("width", 140)
+                            //.attr("height", 100)
+                            .selectAll("g")
+                            //.data(color.domain().slice().reverse())
+                            .data([(.25*legendMax), (.5*legendMax), (.75*legendMax), legendMax, 0])
+                            .enter()
+                            .append("g")
+                            .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; })
+                            .style("position", "absolute");
+                        legend.append("rect")
+                            .attr("width", 18)
+                            .attr("height", 18)
+                            .style("fill", color);
+
+                        legend.append("text")
+                            .data(legendText)
+                            .attr("x", 24) //Horizontal text spacing from legend box
+                            .attr("y", 9)
+                            .attr("dy", ".35em")
+                            .text(function(d) { return d; });
+                        */
                     });
                 });
-
             },
             error: function(e) {
                 console.log(e);

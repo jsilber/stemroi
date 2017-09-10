@@ -156,7 +156,7 @@ def tuitionChart():
 
             cur = db.connection.cursor()
 
-            cur.execute("SELECT u.university_name, u.tuition, u.estimate \
+            cur.execute("SELECT u.university_name, (u.tuition*4) as tuition, u.estimate \
                 FROM stemroidb.state_abrev s, stemroidb.university u \
                 WHERE u.state_fips = s.state_fips and s.state_fips = '{0}'".format(fips))
             payload = []

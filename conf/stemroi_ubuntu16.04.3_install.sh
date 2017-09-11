@@ -89,7 +89,7 @@ mysql> drop database if exists stemroidb;
 # Create initial database
 mysql> create database stemroidb;
 # Exit mysql client and load stemroi_mysql.sql
-mysql -u root -p < stemroi_mysql.sql
+mysql -u root -p stemroidb < stemroi_mysql.sql
 # Log back in to mysql
 mysql -u root -p
 # List installed databases

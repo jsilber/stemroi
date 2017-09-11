@@ -33,29 +33,35 @@
         <h4>Enter some introductory text to help the user....Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate.
         </h4>
         <fieldset>
+            <br />
             <!--Create dropdown form fields-->
             <label>Choose a state:<div id="statesdrop">
                 <select id="statelist"></select>
             </div></label><br />
-
             <label>Choose a university:<div id="universitydrop">
                 <select id="unislist" ></select>
             </div></label><br />
-
-            <label>Choose a major:<div id="majordrop"></div></label><br />
+            <label>Choose a major:<div id="majordrop">
                 <select id="majorlist" ></select>
+            </div></label><br />
+            <!--ROI for university in major-->
+            <div id="unisroi" >
+                <h4>ROI for <span id="uroi_uni_name"></span> in <span id="uroi_maj"></span></h4>
+                <label style="font-weight:bold">Tuition:</label> <span id="uroi_tuition"></span><br />
+                <label style="font-weight:bold">Starting Salary in <span id="uroi_ss_state"></span>:</label> <span id="uroi_starting_salary"></span><br />
+                <label style="font-weight:bold">Peak Salary in <span id="uroi_p_state"></span>:</label> <span id="uroi_peak_salary"></span><br />
+                <label style="font-weight:bold">Return On Investment (ROI):</label> <span id="uroi_uni_roi"></span>
+                <br />
+            </div>
+
         </fieldset>
-
-        <div id="unisroi">
-            <p>Placeholder for selected university/major ROI calc.</p>
-        </div>
-
-
     <script>
+
         // Populates 'statelist' select list (upper-left)
         // Using getJSON method to call list of states.
 
         $.getJSON("/stemroi/api/statesdd", null, function(data) {
+            $("#unisroi").hide();
             // Remove all <option> child tags. -- WHY DID I WRITE THIS??
             // Call statelist form field created above and clear out dropdown
             // https://stackoverflow.com/questions/9909326/clear-dropdownlist-with-jquery
@@ -64,9 +70,6 @@
             $("#statelist").append($("<option></option>").text(" ").val(" "));
             $("#unislist").empty();
             $("#majorlist").empty();
-
-
-
             // Iterates through a collection http://api.jquery.com/jquery.each/
             $.each(data, function(index, item) {
                 $("#statelist").append( // Append an object to the inside of the select box
@@ -81,6 +84,7 @@
 
         // Populates 'unislist' select list (middle-left) based on state dropdown
         $('#statelist').change(function() {
+            $("#unisroi").hide();
             $.ajax({
                 url: '/stemroi/api/universitydd',
                 type: 'POST',
@@ -95,7 +99,8 @@
                     $("#unislist").append($("<option></option>").text(" ").val(" "));
                     $("#majorlist").empty();
                     $("#majorlist").append($("<option></option>").text(" ").val(" "));
-                    $('#roi_by_state').datagrid('loadData', {"total":0,"rows":[]});
+                    // Source (see data and url datagrid properties): https://www.jeasyui.com/documentation/datagrid.php
+                    $('#roi_by_state').datagrid({title:"Salary information is not available for all majors in all states",data:[],url:null});
                     // (Re-)populate based on state selection
                     $.each(result, function(index, item) {
                         $("#unislist").append( // Append an object to the inside of the select box
@@ -114,6 +119,7 @@
 
         // Populates 'majorlist' select list (bottom-left)
         $('#unislist').change(function() {
+            $("#unisroi").hide();
             $.ajax({
                 url: '/stemroi/api/majordd',
                 type: 'POST',
@@ -124,7 +130,8 @@
                     // Clear out dropdown
                     $("#majorlist").empty();
                     $("#majorlist").append($("<option></option>").text(" ").val(" "));
-                    $('#roi_by_state').datagrid('loadData', {"total":0,"rows":[]});
+                    // Source (see data and url datagrid properties): https://www.jeasyui.com/documentation/datagrid.php
+                    $('#roi_by_state').datagrid({title:"Salary information is not available for all majors in all states",data:[],url:null});
                     // Re-populate based on university selection
                     $.each(result, function(index, item) {
                         $("#majorlist").append(
@@ -133,7 +140,6 @@
                             .val(item.cip)
                         );
                     });
-
                 },
                 error: function(e) {
                     console.log(e);
@@ -144,6 +150,10 @@
         $('#majorlist').change(function() {
             var majorListURL = '/stemroi/api/roimajorbystate/' + $('#majorlist :selected').val();
             //http://www.jeasyui.com/forum/index.php?topic=4216.0
+            var roi_datagrid_title = "Salary information for " +
+                $('#majorlist :selected').text() +
+                " Majors in " +
+                $('#statelist :selected').text();
             $('#roi_by_state').datagrid({
                 url: majorListURL,
                 method: 'get',
@@ -152,6 +162,7 @@
                 remoteSort: false,
                 singleSelect: true,
                 fitColumns: true,
+                title: roi_datagrid_title,
                 columns: [[
                     { field:'State', title:'State', align:'left', sortable:true, width:"15%" },
                     { field:'AveTuition', title:'Average Tuition ($)', align:'right', sortable:true, width:"18%" },
@@ -160,12 +171,33 @@
                     { field:'10YRROI', title:'10-Year ROI Score', align:'right', sortable:true, width:"17%" }
                 ]]
             });
+            // University ROI calc here!!!
+            $.ajax({
+                url: '/stemroi/api/university_roi',
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify({ unitid: $('#unislist :selected').val(), cip: $('#majorlist :selected').val()}),
+                success: function(dataU) {
+                    // Populate university ROI info area
+                    $('#uroi_uni_name').text($('#unislist :selected').text());
+                    $('#uroi_tuition').text(dataU.tuition);
+                    $('#uroi_maj').text($('#majorlist :selected').text());
+                    $('#uroi_ss_state').text($('#statelist :selected').text());
+                    $('#uroi_starting_salary').text(dataU.starting_salary);
+                    $('#uroi_p_state').text($('#statelist :selected').text());
+                    $('#uroi_peak_salary').text(dataU.peak_salary);
+                    $('#uroi_uni_roi').text(dataU.university_roi);
+                    $("#unisroi").show();
+                },
+                error: function(e) {
+                    console.log(e);
+                }
+             });
         });
 
     </script>
     </div>
-
-
     <!--Map Tabs-->
     <div id="allmaps" data-options="region:'center', split:true" class="easyui-tabs">
 
@@ -525,8 +557,6 @@
                     .range(["rgb(0,109,44)","rgb(49,163,84)","rgb(186,228,179)","rgb(237,248,233)"]);
                		//Colors derived from ColorBrewer, by Cynthia Brewer, and included in
                		//https://github.com/d3/d3-scale-chromatic
-                console.log(d3.min(dataG, function(d) { return d.jobs_percent; }));
-                console.log(d3.max(dataG, function(d) { return d.jobs_percent; }));
                 //Create SVG element
                 var svgG = d3.select("#gradmap")
                     .append("svg")
@@ -648,20 +678,17 @@
 
 
         <div id="roitable" style="width:50%;float:right;padding:1px;overflow-y:visible">
-
-            <div title="Comparison of ROI in other states:">
-                <table id="roi_by_state" class="easyui-datagrid" title="Salary information is not available for all majors in all states" style="align:center">
-                <thead>
-                    <tr>
-                        <th data-options="field:'State'">State</th>
-                        <th data-options="field:'AveTuition', align:'right'">Average Tuition ($)</th>
-                        <th data-options="field:'AveStart',align:'right'">Average Starting Salary ($)</th>
-                        <th data-options="field:'AvePeak',align:'right'">Average Peak Salary ($)</th>
-                        <th data-options="field:'10YRROI', align:'right'">10-Year ROI Score</th>
-                    </tr>
-                </thead>
-                </table>
-            </div>
+            <table id="roi_by_state" class="easyui-datagrid" title="Salary information is not available for all majors in all states" style="align:center">
+            <thead>
+                <tr>
+                    <th data-options="field:'State'">State</th>
+                    <th data-options="field:'AveTuition', align:'right'">Average Tuition ($)</th>
+                    <th data-options="field:'AveStart',align:'right'">Average Starting Salary ($)</th>
+                    <th data-options="field:'AvePeak',align:'right'">Average Peak Salary ($)</th>
+                    <th data-options="field:'10YRROI', align:'right'">10-Year ROI Score</th>
+                </tr>
+            </thead>
+            </table>
         </div>
     </div>
 

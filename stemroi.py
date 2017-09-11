@@ -203,6 +203,56 @@ def jobChart():
     #print(payload)
     return jsonify(payload), 200
 
+# Flask function for university ROI
+@app.route('/api/university_roi', methods=['POST'])
+def universityROI():
+    if request.is_json:
+        # Get JSON sent
+        content = request.get_json()
+        # Check to see if the field(s) we are looking for exist
+        if 'cip' in content and 'unitid' in content:
+            # Get the cip and unitid values
+            cip = content['cip']
+            unitid = content['unitid']
+            print(cip + ", " + unitid)
+            cur = db.connection.cursor()
+            # SUM returns Decimal when summing ints; must be cast back to int
+            # (since it will be a positive int, cast as a "signed" int).
+            # Based on https://stackoverflow.com/questions/17006049/mysqldb-return-decimal-for-a-sum-of-int
+            cur.execute("SELECT u.university_name, \
+                            CAST(ROUND(u.tuition*4,0) as SIGNED) as ttlTuition, \
+                            CAST(ROUND(AVG(js.a_pct10),0) as SIGNED) as startSal, \
+                            CAST(ROUND(AVG(js.a_pct90),0) as SIGNED) as endSal, \
+                            AVG(js.projsal10yr)/(u.tuition*4) as  unisroi10yr \
+                        FROM stemroidb.state_abrev s, \
+                            stemroidb.university u, \
+                            stemroidb.university_major um, \
+                            stemroidb.major m, \
+                            stemroidb.major_job mj, \
+                            stemroidb.jobs_salaries js \
+                        WHERE s.state_fips = u.state_fips \
+                            and s.state_fips = js.state_fips \
+                            and u.unitid = um.unitid \
+                            and um.cip = m.cip \
+                            and m.cip = mj.cip \
+                            and mj.soc = js.soc \
+                            and u.unitid = '{0}' \
+                            and m.cip = '{1}' \
+                            and js.projsal10yr !=0 \
+                        GROUP BY u.university_name".format(unitid,cip))
+            # Only one row expected, so return as a JSON object instead of a
+            # JSON array
+            payload = {}
+            row = cur.fetchone()
+            if row:
+                payload = {'university_name':row[0], 'tuition':'${0:,}'.format(row[1]), 'starting_salary':'${0:,}'.format(row[2]), 'peak_salary':'${0:,}'.format(row[3]), 'university_roi':'{0:,.2f}'.format(row[4])}
+        else:
+            return jsonify({"errors":"Malformed JSON or incorrect format"}), 400
+    else:
+        return jsonify({"errors":"Malformed JSON or incorrect format"}), 400
+    #print(payload)
+    return jsonify(payload), 200
+
 
 # Endpoint for percentage of graduates vs open jobs
 @app.route('/api/grads/<cip>', methods=['GET'])

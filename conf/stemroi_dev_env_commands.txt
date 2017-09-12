@@ -1,22 +1,57 @@
+# last completed Lynda.com > continue with 2. Getting Started > Creating an about page
+
+# Common terminal window commands
+# pwd = present working directory
+# ls = List
+# ls -al = lists all files and permissions
+# cd foldername = navigates into a foldername
+# cd ../ = navigate up one level
+# mkdir = makes a new directory
+# touch test.txt = creates a new file called test.txt
+# cd /Volumes/PennState (to cd into my USB drive)
+# more commands here = https://learnpythonthehardway.org/book/appendixa.html
+###########################################################################
+
+# Installing Git= https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
+# Git user name = Jackie Silber
+# Git email = jsilbertech@gmail.com
+# Have not set up a GitHub account yet. Wait for Jim to # approve. If approved,
+# go back to Lynda.com > Learning Flask > Chapter 1 > Version Control
+########################################################
+
+
 # Services in Homebrew
-# NOTE: Use run instead of start--start makes the service start and start at login; run
-# only runs it now.
-# Using Homebrew (brew) to list all services, start a services and stop a service:
+# NOTE: Use run instead of start--start makes the service start and start
+# at login; run only runs it now.
+# Using Homebrew (brew) to list all services and their status, run a service
+# and stop a service:
+# This is to start the MySQL DB server (it will run on port 3306).
 brew services list
 brew services run mysql
 brew services stop mysql
 
-# virtualenv and virtualenvwrapper have been installed. virtualenvwrapper makes using
-# virtualenv easier--much easier, in my opinion. 
-# A default PROJECT_HOME has been setup on your system, which is in ~/Documents/projects.
-# The following commands are what you will use primarily for interacting with 
+#####################################################
+
+# Navigating in the MySQL Database from Command Line
+# To log into MySQL after starting brew services run mysql = mysql -u root
+# To quit = QUIT
+# Create a new database = CREATE DATABASE projdb;
+# MySQL Reference: https://dzone.com/refcardz/essential-mysql
+
+#####################################################
+
+# virtualenv and virtualenvwrapper have been installed. virtualenvwrapper makes
+#  using virtualenv easier--much easier, in my opinion.
+# A default PROJECT_HOME has been setup on your system, which is in ~/Documents/projects. (Full Path = /Users/jscropper/Documents/projects/stemroi)
+# The following commands are what you will use primarily for interacting with
 # virtualenvwrapper.
 
 # To list all projects in your PROJECT_HOME:
 workon
 
-# To swith virtualenvs to on of your projects:
-workon <project_name>
+# To switch virtualenvs (to a project or between projects) to one of
+# your projects:
+workon <project_name> # workon stemroi
 
 # To exist the current virtualenv and get back to your default command-line environment:
 deactivate
@@ -25,7 +60,12 @@ deactivate
 mkproject <project_name>
 
 # To make a new Python 3 project in PROJECT_HOME:
-mkproject -p /usr/local/bin/python3 <project_name
+mkproject -p /usr/local/bin/python3 <project_name>
+
+# To delete a project but keep the project folder in PROJECT_HOME:
+rmvirtualenv <project_name>
+
+
 
 # Use pip for installing modules in each virtualenv--here are some pip commands:
 # Search for a module:
@@ -49,6 +89,7 @@ pip install -r requirements.txt
 # Uninstall module:
 pip uninstall <module_name>
 
+
 # Important for the above tools:
 Homebrew:           https://brew.sh
                     https://en.wikipedia.org/wiki/Homebrew_(package_management_software)
@@ -56,3 +97,45 @@ Homebrew:           https://brew.sh
 virtualenv:         https://virtualenv.pypa.io/en/latest/reference/
 virtualenvwrapper:  http://virtualenvwrapper.readthedocs.io/en/latest/command_ref.html
 pip:                https://pip.pypa.io//en/latest/reference/
+
+####################################################################
+# Web Server Deployment Environment = Digital Ocean
+
+####################################################################
+
+# Local Web Server Deployment
+
+# All flask environment files are located here:
+# /Users/jscropper/Documents/projects/stemroi
+
+# To start localhost:5000 , type python mainCode.py.
+
+####################################################################
+
+# Use Git for version control
+# Stop localhost Flask server, then initialize Git from stemroi folder
+
+# Create a -NEW- Git repository--do this -ONCE- per project!
+git init
+
+# Do this daily while developing!
+
+# To see what has changed and what has to be staged/committed
+git status
+
+# Before adding/committing changes, -ALWAYS- git pull in case someone else
+# changed something since your last commit/push
+git pull
+
+# Stage changes (the red items from 'git status')
+git add *
+
+# Commit changes to Git
+git commit -m "My commit message"
+
+# To push changes up to GitHub--must first 'git commit' changes
+git push
+
+####################################################################
+
+# To stop, brew services stop mysql

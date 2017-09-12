@@ -237,8 +237,10 @@
             function initMap() {
 
                 var mapOpts = {
-                  zoom: 4,
-                  center: new google.maps.LatLng(49,-110)
+                    zoom: 4,
+                    center: new google.maps.LatLng(49,-110),
+                    streetViewControl: false,
+                    mapTypeControl: false
                 };
 
                 map = new google.maps.Map(document.getElementById("map"), mapOpts);
@@ -277,6 +279,52 @@
                       }
                     ]
                   },
+                  {
+                    "featureType": "administrative.country",
+                    "elementType": "stroke",
+                    "stylers": [
+                      {
+                        "color": "#999999"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "administrative.country",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "administrative.province",
+                    "elementType": "stroke",
+                    "stylers": [
+                      {
+                        "color": "#4c3758"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "administrative.province",
+                    "elementType": "labels.text",
+                    "stylers": [
+                      {
+                        "color": "#4c3758"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "administrative.province",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+
                   {
                     "featureType": "administrative.land_parcel",
                     "elementType": "labels",
@@ -449,8 +497,8 @@
                   }
                 ];
                 map.setOptions({styles: visStyles});
-
             }
+
 
             function createMarker(point,info,map,icon) {
 
@@ -494,7 +542,7 @@
 
                     var pt = {
                         "uname": result[i].university_name,
-                        "tuition": result[i].tuition
+                        "tuition": result[i].tuition*4
                     };
 
                     createMarker(latLng, 'University: <strong>'

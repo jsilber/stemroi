@@ -216,10 +216,10 @@ DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` PROCEDURE `averages_by_state`(IN cip VARCHAR(15))
 BEGIN
     SELECT s.area_name,
-                    ROUND(AVG(u.tuition*4),0) as tuition,
-                    ROUND(AVG(js.a_pct10),0) as startSal,
-                    ROUND(AVG(js.a_pct90),0) as endSal,
-                    (((ROUND(AVG(js.a_pct10),2))+(((ROUND(AVG(js.a_pct90),2))-(ROUND(AVG(js.a_pct10),2)))/43)*10))/(ROUND(AVG(u.tuition*4),2)) as roi10yr
+                    ROUND((CEILING(AVG((u.tuition*4)/1000))*1000),0) as tuition,
+                    ROUND((CEILING((AVG(js.a_pct10))/1000)*1000),0) as startSal,
+                    ROUND((CEILING((AVG(js.a_pct90))/1000)*1000),0) as endSal,
+                    ROUND((((AVG(js.a_pct10))+((((AVG(js.a_pct90))-(AVG(js.a_pct10)))/43)*10))/(AVG(u.tuition*4))*100),0) as roi10yr
         FROM stemroidb.state_abrev s, stemroidb.university u, stemroidb.university_major um, stemroidb.major m, stemroidb.major_job mj, stemroidb.jobs_salaries js
         WHERE s.state_fips =  js.state_fips and
                     s.state_fips = u.state_fips and
@@ -245,4 +245,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2017-09-10 16:26:46
+-- Dump completed on 2017-09-13 20:16:56

@@ -292,7 +292,7 @@ def jobsPercent(cip):
         payload = []
         # Loop through job openings cursor
         for row in cur:
-            payload.append({'area_name':row[1], 'jobs_percent':float(row[4])})
+            payload.append({'area_name':row[1], 'jobs_percent':float(row[4]), 'cd':float(row[2]), 'job_open':float(row[3])})
     else:
         # If cip is not provided
         return jsonify({"errors":"Missing CIP in URL"}), 400

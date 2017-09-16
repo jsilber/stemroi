@@ -203,7 +203,7 @@
             <!--University points map-->
             <div id="map" title="University Locations" data-options="closable:true"></div>
             <!--Percentage of graduates in 2015 vs 2014 Job Opportunities map-->
-            <div id="gradmap" title="Graduates vs Available Jobs" data-options="closable:true" style="height:100%; padding:20px"><h5>Percentage of Job Market Saturation for Selected Major. Add description here...(Lower% = Ferwer conferred degress vs available job openings. Higher % = Job Market Saturated)</h5></div>
+            <div id="gradmap" title="Graduates vs Available Jobs" data-options="closable:true" style="height:100%; padding:20px"></div>
 
             <!--ROI 10 years after graduation map-->
             <div title="ROI 10 Years after Graduation" data-options="closable:true"></div>
@@ -560,13 +560,11 @@
     <!--ROI Map using D3
     Based on example from Interactive Data Visualization https://github.com/alignedleft/d3-book/blob/master/chapter_14/05_choropleth.html-->
     <script type="text/javascript">
-    /* TODO: Add a legend: http://bl.ocks.org/ZJONSSON/3918369 */
-    //Clear SVG canvas before drawing (in case the user reselects a major )
-    //https://stackoverflow.com/questions/29758385/clear-d3-js-charts-before-loading-new-chart
-    //d3.select("#gradMap").selectAll("svg").remove();
 
     $('#majorlist').change(function() {
         d3.select("#gradmap").selectAll("svg").remove();
+
+
         //Load in graduate data enpoint
         var gradURL = '/stemroi/api/grads/' + $('#majorlist :selected').val();
         $.ajax({
@@ -581,34 +579,56 @@
 
             success: function(dataG) {
 
+                //Set margin surrounding SVG canvas. Title lives here.
+                var marginG = {top: 20, right: 10, bottom: 20, left: 10};
+
                 //Width and height
-            	var w = 1028;
-            	var h = 768;
+            	var w = 700 - marginG.left - marginG.right;
+            	var h = 500 - marginG.top - marginG.bottom;
 
                 //Define map projection
             	var projection = d3.geoAlbersUsa()
             	   .translate([w/2, h/2]) // translate to center of screen
-            	   .scale([1200]);        // scale things down so see entire US
+            	   .scale([900]);        // scale things down to see entire US
 
                 //Define path generator
             	var path = d3.geoPath()
             	   .projection(projection);
 
-                //Define linear scale to sort data values into buckets of color
-               	var color = d3.scaleQuantile()
-                    .domain([
-                        d3.min(dataG, function(d) { return d.jobs_percent; }),
-                        d3.max(dataG, function(d) { return d.jobs_percent; })
-                    ])
-               		//.range(["rgb(237,248,233)","rgb(186,228,179)","rgb(49,163,84)","rgb(0,109,44)"]);
-                    .range(["rgb(0,109,44)","rgb(49,163,84)","rgb(186,228,179)","rgb(237,248,233)"]);
-               		//Colors derived from ColorBrewer, by Cynthia Brewer, and included in
-               		//https://github.com/d3/d3-scale-chromatic
+                //Define scale to sort data values into color buckets
+                //Colors derived from ColorBrewer, by Cynthia Brewer,
+                var color = d3.scaleThreshold()
+                   .domain([50, 100, 5000]) //partial, near, saturated
+                   .range(["rgb(44,123,182)","rgb(255,181,73)","rgb(215,25,28)"]); //dark blue, mango, red;
+
+                //Custom tooltip
+                var tipG = d3.tip()
+                    .attr('class', 'd3-tip')
+                    .offset([-10, 0])
+                    .html(function(d) {
+                        if (d.properties.jobs_percent) {
+                            return "<strong>Percent Job Saturation: </strong> <span style='color:lightblue'>" + d.properties.jobs_percent + "%</span>";
+                        } else {
+                            return "<strong>No data available</strong>";
+                        }
+                    });
+
+
+
+
                 //Create SVG element
-                var svgG = d3.select("#gradmap")
-                    .append("svg")
-                    .attr("width", w)
-                    .attr("height", h);
+                //Understanding margins: https://bl.ocks.org/mbostock/3019563
+                var svgG = d3.select("#gradmap").append("svg")
+                        .attr("width", w + marginG.left + marginG.right)
+                        .attr("height", h + marginG.top + marginG.bottom)
+                    .append("g")
+                        .attr("transform", "translate(" + marginG.left + "," + marginG.top + ")");
+
+                //Map title. Changes based on major dropdown selected.
+                svgG.append("text")
+                    .text("Percentage of Job Market Saturation for " + $('#majorlist :selected').text() + " Majors");
+
+                svgG.call(tipG);
 
                 //Load in grad endpoint data
                 d3.json(gradURL, function(dataG) {
@@ -650,29 +670,34 @@
     							}
     						}
     					}
-                        var legendScale = []
+
                 	    //Bind data and create one path per GeoJSON feature
     					svgG.selectAll("path")
     					    .data(json.features)
     					    .enter()
         					.append("path")
         					.attr("d", path)
+                            .attr("stroke", "#fff")
         					.style("fill", function(d) {
         					    //Get data value
     					   		var value = d.properties.jobs_percent;
 
     					   		if (value) {
+                                    //if (value == 0) { no_data_jm = true; }
     					   			//If value exists…
     						   		return color(value);
     					   		} else {
     					   			//If value is undefined…
     						   		return "rgb(200,200,200)";
     					   		}
-    					   });
-                        /*
-                        var legendText = ["High Job Opportunities","","","Low Job Opportunities","NA"];
-                        var legendMax = d3.max(dataG, function(d) { return d.jobs_percent; });
+
+    					    })
+                            .on('mouseover', tipG.show)
+                            .on('mouseout', tipG.hide);
+
                         // Modified Legend Code from Mike Bostock: http://bl.ocks.org/mbostock/3888852
+                        var legendText = ["Saturated Job Market (>100%)","Partially Saturated Job Market (50-100%)","Minimally Saturated Job Market (<50%)"];
+
                         var legend = d3.select("#gradmap").append("svg")
                             //.attr("top", 100)
                             //.attr("left", 100)
@@ -680,11 +705,13 @@
                             //.attr("height", 100)
                             .selectAll("g")
                             //.data(color.domain().slice().reverse())
-                            .data([(.25*legendMax), (.5*legendMax), (.75*legendMax), legendMax, 0])
+                            //.data([(.9*legendMax), (.75*legendMax), (.5*legendMax)])
+                            .data([100,50, 0])
                             .enter()
                             .append("g")
                             .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; })
                             .style("position", "absolute");
+
                         legend.append("rect")
                             .attr("width", 18)
                             .attr("height", 18)
@@ -696,7 +723,7 @@
                             .attr("y", 9)
                             .attr("dy", ".35em")
                             .text(function(d) { return d; });
-                        */
+
                     });
                 });
             },

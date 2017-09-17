@@ -133,9 +133,9 @@ def avgROI(cip):
         else:
             plrow['AvePeak'] = int(row[3]) #'${0:,.2f}'.format(row[3])
         if row[4] == 0.00 or not all_greater_than_zero:
-            plrow['10YRROI'] = 'N/A'
+            plrow['TenYRROI'] = 'N/A'
         else:
-            plrow['10YRROI'] = '{0:,.2f}'.format(row[4])
+            plrow['TenYRROI'] = row[4]
         # (((ROUND(AVG(js.a_pct10),2))+(((ROUND(AVG(js.a_pct90),2))-(ROUND(AVG(js.a_pct10),2)))/43)*10))/(ROUND(AVG(u.tuition),2)) as roi10yr
         payload.append(plrow)
         # See https://stackoverflow.com/questions/455612/limiting-floats-to-two-decimal-points

@@ -167,7 +167,7 @@
                     { field:'AveTuition', title:'Average Tuition ($)', align:'right', sortable:true, width:"18%" },
                     { field:'AveStart', title:'Average Starting Salary ($)', align:'right', sortable:true, width:"25%" },
                     { field:'AvePeak', title:'Average Peak Salary ($)', align:'right', sortable:true, width:"23%" },
-                    { field:'10YRROI', title:'10-Year ROI Score', align:'right', sortable:true, width:"17%" }
+                    { field:'TenYRROI', title:'10-Year ROI Score', align:'right', sortable:true, width:"17%" }
                 ]]
             });
             // University ROI calc here!!!
@@ -206,7 +206,7 @@
             <div id="gradmap" title="Graduates vs Available Jobs" data-options="closable:true" style="height:100%; padding:20px"></div>
 
             <!--ROI 10 years after graduation map-->
-            <div title="ROI 10 Years after Graduation" data-options="closable:true"></div>
+            <div id="roimap" title="ROI 10 Years after Graduation" data-options="closable:true" style="height:100%; padding:20px"></div>
 
 
     </div>
@@ -557,15 +557,14 @@
         </script>
 
 
-    <!--ROI Map using D3
+    <!--Conferred Degrees vs Available Jobs Map using D3
     Based on example from Interactive Data Visualization https://github.com/alignedleft/d3-book/blob/master/chapter_14/05_choropleth.html-->
     <script type="text/javascript">
 
     $('#majorlist').change(function() {
         d3.select("#gradmap").selectAll("svg").remove();
 
-
-        //Load in graduate data enpoint
+        //Load in graduate data endpoint
         var gradURL = '/stemroi/api/grads/' + $('#majorlist :selected').val();
         $.ajax({
             url: gradURL,
@@ -579,20 +578,17 @@
 
             success: function(dataG) {
 
-                //Set margin surrounding SVG canvas. Title lives here.
+                //Set margin surrounding SVG canvas.
                 var marginG = {top: 20, right: 10, bottom: 20, left: 10};
 
                 //Width and height
                 var w = $("#allmaps").width() * 0.75 - marginG.left - marginG.right;
             	var h = $("#allmaps").height() - marginG.top - marginG.bottom;
-            	//var w = 700 - marginG.left - marginG.right;
-            	//var h = 500 - marginG.top - marginG.bottom;
 
                 //Define map projection
             	var projection = d3.geoAlbersUsa()
             	   .translate([w/2, h/2]) // translate to center of screen
-                   .scale([w]);        // scale things down to see entire US
-            	   //.scale([900]);        // scale things down to see entire US
+                   .scale([w]);        // scale down map to see entire US
 
                 //Define path generator
             	var path = d3.geoPath()
@@ -627,21 +623,18 @@
                     .append("g")
                         .attr("transform", "translate(" + marginG.left + "," + marginG.top + ")");
 
-                // Modified Legend Code from Mike Bostock: http://bl.ocks.org/mbostock/3888852
+                //Modified Legend Code from Mike Bostock: http://bl.ocks.org/mbostock/3888852
                 //var legendText = ["Saturated Job Market (>100%)","Partially Saturated Job Market (50-100%)","Minimally Saturated Job Market (<50%)"];
                 var legendText = ["Saturated (>100%)","Partially Saturated (50-100%)","Minimally Saturated (<50%)"];
 
                 var legend = svgG.append("svg")
                     .attr('x', (w*.6))
                     .selectAll("g")
-                    //.data(color.domain().slice().reverse())
-                    //.data([(.9*legendMax), (.75*legendMax), (.5*legendMax)])
                     .data([100,50, 0])
                     .enter()
                     .append("g")
                     .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; })
                     .style("position", "right");
-                    //.style("vertical-align", "text-top");
 
                 legend.append("rect")
                     .attr("width", 18)
@@ -663,25 +656,10 @@
                         .style("font-weight", "bold")
                         .html("Percentage of Job Market Saturation for " + $('#majorlist :selected').text() + " Majors");
 
-
-                //Map title. Changes based on major dropdown selected.
-                /*
-                svgG.append("text")
-                    .text("Percentage of Job Market Saturation for " + $('#majorlist :selected').text() + " Majors")
-                    .style("font-weight", "bold");
-                    */
-
                 svgG.call(tipG);
 
                 //Load in grad endpoint data
                 d3.json(gradURL, function(dataG) {
-                    /*
-                    //Set input domain for color scale
-            		color.domain([
-            			d3.min(dataG, function(d) { return d.jobs_percent; }),
-            			d3.max(dataG, function(d) { return d.jobs_percent; })
-            	    ]);
-                    */
 
                     //Load in GeoJSON data
                     var url = ("{{ url_for('static', filename='js/us-states.json') }}");
@@ -694,9 +672,6 @@
     						//Grab state name
     						var dataState = dataG[i].area_name;
 
-    						//Grab data value, and convert from string to float
-    						//var dataValue = parseFloat(dataG[i].jobs_percent);
-
     						//Find the corresponding state inside the GeoJSON
     						for (var j = 0; j < json.features.length; j++) {
 
@@ -705,14 +680,12 @@
     							if (dataState == jsonState) {
 
     								//Copy the grad data value into the JSON
-                                    //json.features[j].properties.name = dataG[i].name;
-    								json.features[j].properties.jobs_percent = parseFloat(dataG[i].jobs_percent);
+                                	json.features[j].properties.jobs_percent = parseFloat(dataG[i].jobs_percent);
                                     json.features[j].properties.cd = dataG[i].cd;
                                     json.features[j].properties.job_open = dataG[i].job_open;
 
     								//Stop looking through the JSON
     								break;
-
     							}
     						}
     					}
@@ -729,8 +702,7 @@
     					   		var value = d.properties.jobs_percent;
 
     					   		if (value) {
-                                    //if (value == 0) { no_data_jm = true; }
-    					   			//If value exists…
+                                	//If value exists…
     						   		return color(value);
     					   		} else {
     					   			//If value is undefined…
@@ -740,8 +712,6 @@
     					    })
                             .on('mouseover', tipG.show)
                             .on('mouseout', tipG.hide);
-
-
                     });
                 });
             },
@@ -753,6 +723,170 @@
     </script>
 
 
+
+
+
+    <!--ROI Map using D3
+    Based on example from Interactive Data Visualization https://github.com/alignedleft/d3-book/blob/master/chapter_14/05_choropleth.html-->
+    <script type="text/javascript">
+
+    $('#majorlist').change(function() {
+        d3.select("#roimap").selectAll("svg").remove();
+
+        //Load in ROI data endpoint
+        var roiURL = '/stemroi/api/roimajorbystate/' + $('#majorlist :selected').val();
+        $.ajax({
+            url: roiURL,
+            type: 'get',
+            dataType: 'json',
+            contentType: 'application/json',
+            // Get major selected and convert the object to a string
+            // https://stackoverflow.com/questions/6323338/jquery-ajax-posting-json-to-webservice
+
+            data: JSON.stringify({ cip: $('#majorlist :selected').val()}),
+
+            success: function(dataR) {
+
+                //Set margin surrounding SVG canvas.
+                var marginR = {top: 20, right: 10, bottom: 20, left: 10};
+
+                //Width and height
+                var w = $("#allmaps").width() * 0.75 - marginR.left - marginR.right;
+            	var h = $("#allmaps").height() - marginR.top - marginR.bottom;
+
+                //Define map projection
+            	var projection = d3.geoAlbersUsa()
+            	   .translate([w/2, h/2]) // translate to center of screen
+                   .scale([w]);        // scale down map to see entire US
+
+                //Define path generator
+            	var path = d3.geoPath()
+            	   .projection(projection);
+
+                //Define scale to sort data values into color buckets
+                //Colors derived from ColorBrewer, by Cynthia Brewer,
+                var color = d3.scaleThreshold()
+                   .domain([25, 50, 75, 100, 200]) //25%, 50%, 75%, over 100%
+                   //.range(["rgb(186,228,188)","rgb(123,204,196)","rgb(67,162,202)","rgb(253,141,60)","rgb(189,0,38)"]); //light green (low ROI) through red(high ROI)
+                   .range(["rgb(240,59,32)","rgb(253,141,60)","rgb(186,228,188)","rgb(123,204,196)","rgb(67,162,202)"]);
+
+               //Custom tooltip
+               var tipR = d3.tip()
+                    .attr('class', 'd3-tip')
+                    .offset([-10, 0])
+                    .html(function(d) {
+                         //var tenYrROI = d.properties.TenYRROI;
+                        if (d.properties.TenYRROI && d.properties.TenYRROI != 'N/A') {
+                            return  "<strong>State: </strong> <span style='color:lightblue'>" + d.properties.name + "</span><br />" +
+                                    "<strong>ROI 10 years after graduation: </strong> <span style='color:lightblue'>" + d.properties.TenYRROI + "%</span><br />";
+                       } else {
+                           return "<strong>No data available</strong>";
+                       }
+                   });
+
+                //Create SVG element
+                //Understanding margins: https://bl.ocks.org/mbostock/3019563
+                var svgR = d3.select("#roimap").append("svg")
+                        .attr("width", w + marginR.left + marginR.right)
+                        .attr("height", h + marginR.top + marginR.bottom)
+                    .append("g")
+                        .attr("transform", "translate(" + marginR.left + "," + marginR.top + ")");
+
+                //Modified Legend Code from Mike Bostock: http://bl.ocks.org/mbostock/3888852
+                //var legendText = ["Saturated (>100%)","Partially Saturated (50-100%)","Minimally Saturated (<50%)"];
+                var legendText = ["High ROI (>100%)","75-100%","50-75%", "25-50%", "Low ROI (>25%)"];
+
+                var legend = svgR.append("svg")
+                    .attr('x', (w*.6))
+                    .selectAll("g")
+                    .data([100, 75, 50, 25,0])
+                    .enter()
+                    .append("g")
+                    .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; })
+                    .style("position", "right");
+
+                legend.append("rect")
+                    .attr("width", 18)
+                    .attr("height", 18)
+                    .style("fill", color);
+
+                legend.append("text")
+                    .data(legendText)
+                    .attr("x", 24) //Horizontal text spacing from legend box
+                    .attr("y", 9)
+                    .attr("dy", ".35em")
+                    .text(function(d) { return d; });
+
+                svgR.append("foreignObject")
+                        .attr("width", w/2)
+                        .attr("height", 100)
+                    .append("xhtml:body")
+                        .style("font", "14px 'Arial'")
+                        .style("font-weight", "bold")
+                        .html("Simplified ROI 10 Years After Graduation Based on " + $('#majorlist :selected').text() + " Majors");
+
+                svgR.call(tipR);
+
+                //Load in grad endpoint data
+                d3.json(roiURL, function(dataR) {
+
+                    //Load in GeoJSON data
+                    var url = ("{{ url_for('static', filename='js/us-states.json') }}");
+                    d3.json(url, function(json) {
+
+                        //Merge the grad data and GeoJSON
+    					//Loop through once for each grad data value
+    					for (var i = 0; i < dataR.length; i++) {
+
+    						//Grab state name
+    						var dataState = dataR[i].State;
+
+    						//Find the corresponding state inside the GeoJSON
+    						for (var j = 0; j < json.features.length; j++) {
+
+    							var jsonState = json.features[j].properties.name;
+
+    							if (dataState == jsonState) {
+
+    								//Copy the roi data value into the JSON
+                                	json.features[j].properties.TenYRROI = dataR[i].TenYRROI;
+                                	//Stop looking through the JSON
+    								break;
+    							}
+    						}
+    					}
+                        console.log(json.features);
+                	    //Bind data and create one path per GeoJSON feature
+    					svgR.selectAll("path")
+    					    .data(json.features)
+    					    .enter()
+        					.append("path")
+        					.attr("d", path)
+                            .attr("stroke", "#fff")
+        					.style("fill", function(d) {
+        					    //Get data value
+    					   		var value = d.properties.TenYRROI;
+
+    					   		if (value && value != 'N/A') {
+                                	//If value exists…
+    						   		return color(value);
+    					   		} else {
+    					   			//If value is undefined…
+    						   		return "rgb(200,200,200)";
+    					   		}
+
+    					    })
+                            .on('mouseover', tipR.show)
+                            .on('mouseout', tipR.hide);
+                    });
+                });
+            },
+            error: function(e) {
+                console.log(e);
+            }
+        });
+    });
+    </script>
 
     <div id="south_side" data-options="region:'south',split:true" style="height:30%">
         <!--http://www.jeasyui.com/demo/main/index.php?plugin=Tabs&-->
@@ -777,14 +911,14 @@
                     <th data-options="field:'AveTuition', align:'right'">Average Tuition ($)</th>
                     <th data-options="field:'AveStart',align:'right'">Average Starting Salary ($)</th>
                     <th data-options="field:'AvePeak',align:'right'">Average Peak Salary ($)</th>
-                    <th data-options="field:'10YRROI', align:'right'">10-Year ROI Score</th>
+                    <th data-options="field:'TenYRROI', align:'right'">10-Year ROI Score</th>
                 </tr>
             </thead>
             </table>
         </div>
     </div>
 
-    //<!--Populates D3 Compare Tuition bar chart based on state dropdown. Based largely on code from here: http://bl.ocks.org/Caged/6476579-->
+    <!--Populates D3 Compare Tuition bar chart based on state dropdown. Based largely on code from here: http://bl.ocks.org/Caged/6476579-->
     <script language="javascript">
         // Populates D3 Compare Tuition bar chart based on state dropdown
         $('#statelist').change(function() {
@@ -891,7 +1025,7 @@
     </script>
 
 
-    //Populates D3 projected job openings bar chart based on major dropdown
+    <!--Populates D3 projected job openings bar chart based on major dropdown-->
     <script language="javascript">
 
         // Populates D3 Projected Jobs bar chart based on major dropdown

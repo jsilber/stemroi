@@ -30,8 +30,7 @@
     <div id="banner" data-options="region:'north', split:false"></div>
 
     <div id="ddcontrols" data-options="region:'west',split:true" style="width:435px;">
-        <h4>Enter some introductory text to help the user....Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate.
-        </h4>
+        <p style="margin-left:18px">Choosing a university and major is a big decision. Beyond the academic ranking of a school and your interest in STEM, the financial decisions you make now will impact you well into the future. Students with STEM degrees generally earn more money, however tuition rates and job opportunities vary by state. By thinking about your academic and future professional career as an investment, you can start planning for your future right now. Start by using this exploratory tool to investigate salary trends, job market saturation, and calculate a simplified return on investment score by university.</p>
         <fieldset>
             <br />
             <!--Create dropdown form fields-->
@@ -53,8 +52,10 @@
                 <label style="font-weight:bold">Return On Investment (ROI):</label> <span id="uroi_uni_roi"></span>
                 <br />
             </div>
+        <p><a href="http://localhost:5000/stemroi/methods/" target="_blank">  Click here </a> for more information about data sources and how ROI is calculated.</p>
 
         </fieldset>
+
     <script>
 
         // Populates 'statelist' select list (upper-left)
@@ -284,7 +285,7 @@
                     "elementType": "stroke",
                     "stylers": [
                       {
-                        "color": "#999999"
+                        "color": "#b3b3b3"
                       }
                     ]
                   },
@@ -311,7 +312,7 @@
                     "elementType": "labels.text",
                     "stylers": [
                       {
-                        "color": "#4c3758"
+                        "color": "#b3b3b3"
                       }
                     ]
                   },
@@ -648,6 +649,8 @@
                     .attr("dy", ".35em")
                     .text(function(d) { return d; });
 
+                //This SVG element creates a container for the title and wraps text.
+                //http://bl.ocks.org/jebeck/10699411
                 svgG.append("foreignObject")
                         .attr("width", w/2)
                         .attr("height", 100)

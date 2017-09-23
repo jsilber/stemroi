@@ -36,6 +36,7 @@ canvas {
     height: 1px;
 }
 
+
 /* D3 Styles */
 .axis path, .axis line {
     fill: none;

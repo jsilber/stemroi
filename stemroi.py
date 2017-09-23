@@ -16,6 +16,12 @@ def index():
 def playground():
     return render_template("d3_playground.html")
 
+#Add methodology page
+#http://pythonhow.com/adding-more-pages-to-the-website/
+@app.route('/methods/')
+def methods():
+    return render_template('methods.html')
+
 # Flask function for Google Map University Points
 @app.route('/api/unis', methods=['GET'])
 def allUniversities():
@@ -223,7 +229,7 @@ def universityROI():
                             CAST(ROUND(u.tuition*4,0) as SIGNED) as ttlTuition, \
                             CAST(ROUND(AVG(js.a_pct10),0) as SIGNED) as startSal, \
                             CAST(ROUND(AVG(js.a_pct90),0) as SIGNED) as endSal, \
-                            AVG(js.projsal10yr)/(u.tuition*4) as  unisroi10yr \
+                            CAST(ROUND((AVG(js.projsal10yr)/(u.tuition*4)*100),0) as SIGNED) as  unisroi10yr \
                         FROM stemroidb.state_abrev s, \
                             stemroidb.university u, \
                             stemroidb.university_major um, \
@@ -245,7 +251,7 @@ def universityROI():
             payload = {}
             row = cur.fetchone()
             if row:
-                payload = {'university_name':row[0], 'tuition':'${0:,}'.format(row[1]), 'starting_salary':'${0:,}'.format(row[2]), 'peak_salary':'${0:,}'.format(row[3]), 'university_roi':'{0:,.2f}'.format(row[4])}
+                payload = {'university_name':row[0], 'tuition':'${0:,}'.format(row[1]), 'starting_salary':'${0:,}'.format(row[2]), 'peak_salary':'${0:,}'.format(row[3]), 'university_roi':'{0:,}%'.format(row[4])}
         else:
             return jsonify({"errors":"Malformed JSON or incorrect format"}), 400
     else:
@@ -264,7 +270,7 @@ def jobsPercent(cip):
         # Replace null value with 0:
         # https://stackoverflow.com/questions/3532776/replace-null-with-0-in-mysql
         # Find number of job openings by major
-        cur.execute("SELECT t1.state_fips, t1.area_name, t1.cd, t2.jobs, IFNULL(((t1.cd/t2.jobs)*100),0) AS percentJobs \
+        cur.execute("SELECT t1.state_fips, t1.area_name, t1.cd, t2.jobs, ROUND(IFNULL(((t1.cd/t2.jobs)*100),0),0) AS percentJobs \
         FROM \
         	(SELECT s.state_fips, s.area_name, (SUM(um.conferred_degrees)) AS cd \
         	FROM stemroidb.state_abrev s, \

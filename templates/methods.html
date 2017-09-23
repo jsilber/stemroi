@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/mystyles.css') }}">
+    <style>
+        #banner {
+            width:100%;
+            height:90px;
+            background: url("/static/img/LOGO.jpg");
+            background-color: #4D4D4D;
+            background-repeat: no-repeat;
+            padding:0;
+            margin:0;
+        }
+
+        #bodyMethods {
+            /*height: 100%;*/
+            padding-left:18px;
+            width:800px;
+            font: 13px sans-serif;
+        }
+
+    </style>
+
+    </head>
+
+    <body class="easyui-layout" >
+        <div id="banner" data-options="region:'north', split:false"></div>
+
+    <div id="bodyMethods">
+
+        <h2>A brief note on data sources and methodology</h2>
+        <p>This app was created as part of the capstone requirement for the Pennsylvania State University MGIS program and was presented at the Association of Pacific Coast Geographers annual conference October 2017. Details on the full methodology, background literature review, and conclusions will be available at this site after December 2017. Below are links to the original data sources and a brief explanation of the simplified return on investment (ROI) calculation. </p>
+
+        <h3>Data Sources</h3>
+        <p>University tuition and conferred degrees by major were downloaded from the <a href="https://nces.ed.gov/ipeds" target="_blank">National Center for Education Statistics (NCES)</a>. Tuition is defined as the cost of in-state attendance for full-time, 4-year degree students living on-campus including fees and books. Tuition rates from the 2015-2016 academic year are used because it was the most complete data set available at the time. Tuition not provided will be estimated based on information provided by CollegeCalc.org which is sourced from the U.S. Department of Education. Estimated tuition is noted in the info window for each university shown in the Compare Tuition by State bar chart.</p>
+
+        <p>Employment salaries and projected job openings were pulled from the Bureau of Labor Statistics (BLS). The <a href="https://www.bls.gov/oes/2015/may/oessrcst.htm" target="_blank">May 2015 State Occupational Employment and Wage Estimates </a>was used to calculate early career earnings. The <a href="http://www.projectionscentral.com/Projections/Download" target="_blank"> long-term employment projections (2014-2014)</a> dataset was used to predicted number of job opportunities for a selected major.</p>
+
+        <p>A universal definition of STEM does not exist therefore STEM degree definitions are based on a combination of two sources: <a href="https://www.bls.gov/soc/Attachment_C_STEM.pdf" target="_blank">Bureau of Labor Statistics 2010 Standard Occupational Classification System </a> and the <a href="https://www.ice.gov/sites/default/files/documents/Document/2016/stem-list.pdf" target="_blank">U.S. Immigration and Customs Enforcement STEM Designation Degree Program List</a>. Universities that do not offer STEM degrees were filtered out and do not appear in this app.</p>
+
+        <p>Finally, to compare degree programs with possible occupations, the NCES in conjunction with the BLS developed the <a href="https://nces.ed.gov/ipeds/cipcode/default.aspx?y=55" target="_target">CIP-SOC crosswalk table</a>. The Classification of Instructional Programs (CIP) represents education program degrees. Occupations are identified by a Standard Occupational Classification codes (SOC). Each CIP code is mapped to multiple SOC codes and vice versa. Although it is not possible to match every degree to every possible occupation, this database provides the link between majors and associated jobs.</p>
+
+
+
+
+        <h3>Return on Investment Calculation</h3>
+        <p> The ROI simplified calculation estimates the proportion of the tuition investment that can be earned back 10 years after graduation. Below is an example calculation using a fictitious university in California.</p>
+
+        <img src = "/static/img/ROIMethodologySM.png">
+
+        <p>Four-year tuition at Sample University is $80,000. Assuming the average person graduates at age 22 and works until age 65, there are 43 working years. Using the BLS wage estimates, the annual 10th percentile wage is used to approximate the starting salary. Likewise, the peak salary (at the end of the 43 time span) is estimated using the annual 90th Percentile wage. (Starting and peak salaries are based on the average for occupations associated with the selected major per the CIP-SOC crosswalk table.) By calculating a straight-line interpolation for the first 10 years after graduation, it is estimated that a student would earn $54,000. Dividing the 10-year estimate by the total tuition yields a 68% return on investment.</p>
+
+        <p>A complete economic ROI analysis would factor in other variables like taxes, cost of living, student loan interest rates, and inflation, but this simplified calculation can help students determine the approximate financial gain a decade after graduation. Perhaps after assessing the ROI, a student may choose to attend a less expensive college, live at home and attend the first two years at a junior college, or perhaps choose a different major based on job market saturation.</p>
+    </div>
+    </body>
+</html>

@@ -18,7 +18,7 @@ def playground():
 
 #Add methodology page
 #http://pythonhow.com/adding-more-pages-to-the-website/
-@app.route('/methods/')
+@app.route('/methods.html')
 def methods():
     return render_template('methods.html')
 

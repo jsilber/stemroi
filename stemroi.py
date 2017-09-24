@@ -22,26 +22,51 @@ def playground():
 def methods():
     return render_template('methods.html')
 
-# Flask function for Google Map University Points
-@app.route('/api/unis', methods=['GET'])
-def allUniversities():
-    # Get a connected cursor
-    cur = db.connection.cursor()
-    # Execute query (from employees sample database: https://github.com/datacharmer/test_db)
-    cur.execute('''SELECT * FROM university''')
-    #Extract row headers
-    row_headers = [x[0] for x in cur.description]
-    # Fetch all from the cursor
-    rv = cur.fetchall()
-    # Create an empty list we can append to
-    payload = []
-    # Based on https://stackoverflow.com/questions/43796423/python-converting-mysql-query-result-to-json
-    for result in rv:
-        payload.append(dict(zip(row_headers,result)))
+# WORKING Flask function for Google Map University Points
+# @app.route('/api/unis', methods=['GET'])
+# def allUniversities():
+#     # Get a connected cursor
+#     cur = db.connection.cursor()
+#     # Execute query (from employees sample database: https://github.com/datacharmer/test_db)
+#     cur.execute('''SELECT * FROM university''')
+#     #Extract row headers
+#     row_headers = [x[0] for x in cur.description]
+#     # Fetch all from the cursor
+#     rv = cur.fetchall()
+#     # Create an empty list we can append to
+#     payload = []
+#     # Based on https://stackoverflow.com/questions/43796423/python-converting-mysql-query-result-to-json
+#     for result in rv:
+#         payload.append(dict(zip(row_headers,result)))
+#
+#     # Convert list of dict to JSON and send response code 200
+#     # Based on https://en.wikipedia.org/wiki/List_of_HTTP_status_codes. Look for 200
+#     return jsonify(payload), 200
 
-    # Convert list of dict to JSON and send response code 200
-    # Based on https://en.wikipedia.org/wiki/List_of_HTTP_status_codes. Look for 200
+# EXPERIMENTAL GOOGLE MAPS ENDPOINT
+@app.route('/api/unis/<fips>', methods=['GET'])
+def allUniversities(fips):
+    #if request.is_json:
+    # Get JSON sent
+    #content = request.get_json()
+    #print(content)
+    # Check to see if the field(s) we are looking for exist
+    if 'fips':
+
+        cur = db.connection.cursor()
+
+        cur.execute("SELECT stemroidb.university.university_name, (stemroidb.university.tuition*4) as tuition, stemroidb.university.latitude, stemroidb.university.longitude, stemroidb.state_abrev.state_fips \
+            FROM stemroidb.university INNER JOIN stemroidb.state_abrev \
+            ON stemroidb.university.state_fips=stemroidb.state_abrev.state_fips \
+            WHERE stemroidb.state_abrev.state_fips = '{0}' \
+            ORDER BY stemroidb.university.university_name".format(fips))
+        payload = []
+        for row in cur:
+            payload.append({'university_name':row[0], 'tuition':row[1], 'latitude':row[2], 'longitude':row[3], 'fips':row[4]})
+    else:
+        return jsonify({"errors":"Malformed JSON or incorrect format"}), 400
     return jsonify(payload), 200
+
 
 # Flask function for states dropdown menu
 @app.route('/api/statesdd', methods=['GET'])

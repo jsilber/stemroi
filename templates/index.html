@@ -566,6 +566,7 @@
         var prev_infoWindow = false;
         var markers = [];
 
+
         function initMap() {
 
             var mapOpts = {
@@ -856,6 +857,7 @@
             markers.push({mark:marker, uni:uni_name});
         }
 
+
         $('#statelist').change(function() {
             // Remove markers
             // See https://stackoverflow.com/questions/20101805/how-to-remove-a-single-marker-from-google-map
@@ -863,6 +865,7 @@
                 markers[i].mark.setMap(null);
             }
             // Reset markers array
+
             markers = [];
 
             //Load in statelist data endpoint
@@ -883,6 +886,10 @@
                                 scale: 4
                         };
 
+                    //Create the bounds object to hold marker coordinates
+                    var bounds = new google.maps.LatLngBounds();
+
+
                     for (var i = 0; i < result.length; i++) {
 
                         //if statelist fips val == dataMarker fips value, then create marker
@@ -890,6 +897,10 @@
                         var lat = result[i].latitude;
                         var long = result[i].longitude;
                         var latLng = new google.maps.LatLng(lat, long);
+
+                        //Update the map extent based on the selected state's markers
+                        bounds.extend(latLng);
+
 
                         var pt = {
                             "university_name": result[i].university_name,
@@ -905,6 +916,8 @@
                                         map, icon);
 
                     };
+                //Zoom the map to the extent of the selected state markers.    
+                map.fitBounds(bounds);
                 },
 
                 error: function(e) {

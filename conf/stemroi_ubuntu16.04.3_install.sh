@@ -118,7 +118,6 @@ ufw enable
 # View firewall configuration
 ufw status verbose
 
-
 # Configure domain name - DO THIS BEFORE GENERATING CERT!!! https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean
 # Change hostname while the OS is running:  http://ubuntuhandbook.org/index.php/2016/06/change-hostname-ubuntu-16-04-without-restart/
 # Change /etc/hostname
@@ -225,6 +224,7 @@ mv /var/www/html/index.html /var/www/html/index.html_orig
 # Replace Apache's default index.html with stemroi/conf/index.html
 cp /var/www/stemroi/conf/index.html /var/www/html/.
 
+# Apache and MySQL Service Management
 # Start Apache or MySQL
 systemctl start apache2|mysql
 # To check the status of Apache or MySQL:
@@ -234,5 +234,52 @@ systemctl stop apache2|mysql
 # Restart Apache or MySQL
 systemctl restart apache2|mysql
 
-# Start here for research putting webapp URLs in their own directories...
+# TODO: Start here to research putting webapp URLs in their own directories:
 # https://stackoverflow.com/questions/29882579/run-multiple-independent-flask-apps-in-ubuntu
+
+# All of the above is for the -INIITIAL- server setup!!!
+
+
+# ************************** Updating the Server ***************************
+# 1. Login to the server and su to root
+ssh jsilber@jackberrystudio.net
+sudo su -
+# 2. Go to the root of stemroi, make note of the "MYSQL_PASSWORD" at the top
+# of stemroi.py, git checkout stemroi.py (git pull will fail otherwise), and
+# then git pull. Next, open stemroi.py in a text editor and put the
+# "MYSQL_PASSWORD" back in the file.
+cd /var/www/stemroi
+head stemroi.py             # This will show you the first 10 lines
+git checkout stemroi.py
+git pull
+vi stemroi.py               # Enter the password and save
+# 3. While still in /var/www/stemroi, change ownership of all files to
+# www-data:www-data
+chown -R www-data:www-data .
+# 4. If needed, update the data in MySQL by first deleting the database and
+# then recreating it (with verification steps at the end)
+# Go to the data directory
+cd /var/www/stemroi/data
+# Login to mysql
+mysql -u root -p
+# Drop existing database (if necessary)
+mysql> drop database if exists stemroidb;
+# Create initial database
+mysql> create database stemroidb;
+# Exit mysql client (by typing exit and pressing Enter) and
+# load stemroi_mysql.sql
+mysql -u root -p stemroidb < stemroi_mysql.sql
+# Log back in to mysql
+mysql -u root -p
+# List installed databases
+mysql> show databases;
+# Switch to stemroidb
+mysql> use stemroidb;
+# Confirm tables
+mysql> show tables;
+# Confirm stored procedure(s)
+mysql> show create procedure averages_by_state;
+# Exit mysql client
+# 5. Restart Apache
+systemctl restart apache2
+# 6. Test the web app

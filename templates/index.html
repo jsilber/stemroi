@@ -916,7 +916,7 @@
                                         map, icon);
 
                     };
-                //Zoom the map to the extent of the selected state markers.    
+                //Zoom the map to the extent of the selected state markers.
                 map.fitBounds(bounds);
                 },
 
@@ -997,7 +997,7 @@
                         if (d.properties.jobs_percent) {
                             return  "<strong>State: </strong> <span style='color:lightblue'>" + d.properties.name + "</span><br />" +
                                     "<strong>Percent Job Saturation: </strong> <span style='color:lightblue'>" + d.properties.jobs_percent + "%</span><br />" +
-                                    "<strong>Conferred degrees: </strong> <span style='color:lightblue'>" + d.properties.cd + "</span><br />" +
+                                    "<strong>Graduates: </strong> <span style='color:lightblue'>" + d.properties.cd + "</span><br />" +
                                     "<strong>Annual Jobs Open (2014): </strong> <span style='color:lightblue'>" + d.properties.job_open + "</span>";
                        } else {
                            return "<strong>No data available</strong>";

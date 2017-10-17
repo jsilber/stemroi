@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <!--meta charset tag is needed to correctly parse D3 functions and data-->
     <meta charset="utf-8">
@@ -12,25 +13,25 @@
     <script type="text/javascript" src="{{ url_for('static', filename='js/Cagedd3tips/index.js') }}"></script>
 
 
-<style>
-    #banner {
-        width:100%;
-        height:90px;
-        background: url("{{ url_for('static', filename='img/LOGO.jpg') }}");
-        background-color: #4D4D4D;
-        background-repeat: no-repeat;
-        padding:0;
-        margin:0;
-    }
-</style>
+    <style>
+        #banner {
+            width: 100%;
+            height: 90px;
+            background: url("{{ url_for('static', filename='img/LOGO.jpg') }}");
+            background-color: #4D4D4D;
+            background-repeat: no-repeat;
+            padding: 0;
+            margin: 0;
+        }
+    </style>
 
 </head>
 
-<body class="easyui-layout" >
+<body class="easyui-layout">
     <div id="banner" data-options="region:'north', split:false"></div>
 
     <div id="ddcontrols" data-options="region:'west',split:true" style="width:435px;">
-        <p style="margin-left:18px">Choosing a university and major is a big decision. Beyond the academic ranking of a school and your interest in STEM, the financial decisions you make now will impact you well into the future. Students with STEM degrees generally earn more money, however tuition rates and job opportunities vary by state. By thinking about your academic and future professional career as an investment, you can start planning for your future right now. Start by using this exploratory tool to investigate salary trends, job market saturation, and calculate a simplified return on investment score by university.</p>
+        <p style="margin-left:18px">Choosing a university and major is a big decision. Beyond the academic ranking of a school and your interest in STEM, the financial decisions you make now will impact you well into the future. Students with STEM degrees generally earn more money,however tuition rates and job opportunities vary by state. By thinking about your academic and future professional career as an investment, you can start planning for your future right now. Start by using this exploratory tool to investigate salary trends, job market saturation, and calculate a simplified return on investment score by university.</p>
         <fieldset>
             <br />
             <!--Create dropdown form fields-->
@@ -44,7 +45,7 @@
                 <select id="majorlist" ></select>
             </div></label><br />
             <!--ROI for university in major-->
-            <div id="unisroi" >
+            <div id="unisroi">
                 <h4>ROI for <span id="uroi_uni_name"></span> in <span id="uroi_maj"></span></h4>
                 <label style="font-weight:bold">Tuition:</label> <span id="uroi_tuition"></span><br />
                 <label style="font-weight:bold">Starting Salary in <span id="uroi_ss_state"></span>:</label> <span id="uroi_starting_salary"></span><br />
@@ -52,515 +53,231 @@
                 <label style="font-weight:bold">Return On Investment (ROI):</label> <span id="uroi_uni_roi"></span>
                 <br />
             </div>
-        <p><a href="methods.html" target="_blank">  Click here </a> for more information about data sources and how ROI is calculated.</p>
+            <p><a href="methods.html" target="_blank">  Click here </a> for more information about data sources and how ROI is calculated.</p>
 
         </fieldset>
 
-    <script>
+        <script>
+            // Populates 'statelist' select list (upper-left)
+            // Using getJSON method to call list of states.
 
-        // Populates 'statelist' select list (upper-left)
-        // Using getJSON method to call list of states.
-
-        $.getJSON("/stemroi/api/statesdd", null, function(data) {
-            $("#unisroi").hide();
-            // Remove all <option> child tags. -- WHY DID I WRITE THIS??
-            // Call statelist form field created above and clear out dropdown
-            // https://stackoverflow.com/questions/9909326/clear-dropdownlist-with-jquery
-            $("#statelist").empty();
-            // Adds a blank value to the beginning of the dropdown list
-            $("#statelist").append($("<option></option>").text(" ").val(" "));
-            $("#unislist").empty();
-            $("#majorlist").empty();
-            // Iterates through a collection http://api.jquery.com/jquery.each/
-            $.each(data, function(index, item) {
-                $("#statelist").append( // Append an object to the inside of the select box
-                    $("<option></option>")
-                    .text(item.state)
-                    .val(item.fips)
-                );
+            $.getJSON("/stemroi/api/statesdd", null, function(data) {
+                $("#unisroi").hide();
+                // Call statelist form field created above and clear out dropdown
+                // https://stackoverflow.com/questions/9909326/clear-dropdownlist-with-jquery
+                $("#statelist").empty();
+                // Adds a blank value to the beginning of the dropdown list
+                $("#statelist").append($("<option></option>").text(" ").val(" "));
+                $("#unislist").empty();
+                $("#majorlist").empty();
+                // Iterates through a collection http://api.jquery.com/jquery.each/
+                $.each(data, function(index, item) {
+                    $("#statelist").append( // Append an object to the inside of the select box
+                        $("<option></option>")
+                        .text(item.state)
+                        .val(item.fips)
+                    );
+                });
             });
-        });
 
 
 
-        // Populates 'unislist' select list (middle-left) based on state dropdown
-        $('#statelist').change(function() {
-            $("#unislist").show();
-            $("#unisroi").hide();
-            $.ajax({
-                url: '/stemroi/api/universitydd',
-                type: 'POST',
-                dataType: 'json',
-                contentType: 'application/json',
-                // Get state selected and convert the object to a string
-                // https://stackoverflow.com/questions/6323338/jquery-ajax-posting-json-to-webservice
-                data: JSON.stringify({ fips: $('#statelist :selected').val()}),
-                success: function(result) {
-                    // Clear out dropdown of universities and majors if statelist changes
-                    $("#unislist").empty();
-                    $("#unislist").append($("<option></option>").text(" ").val(" "));
-                    $("#majorlist").empty();
-                    $("#majorlist").append($("<option></option>").text(" ").val(" "));
-                    // Source (see data and url datagrid properties): https://www.jeasyui.com/documentation/datagrid.php
-                    $('#roi_by_state').datagrid({title:"ROI information is not available for all majors in all states",data:[],url:null});
-                    // (Re-)populate based on state selection
-                    $.each(result, function(index, item) {
-                        $("#unislist").append( // Append an object to the inside of the select box
-                            $("<option></option>")
-                            .text(item.university_name)
-                            .val(item.unitid)
-                        );
-                    });
-                },
-                error: function(e) {
-                    console.log(e);
-                }
-             });
-        });
-
-
-        // Populates 'majorlist' select list (bottom-left)
-        $('#unislist').change(function() {
-            $("#unisroi").hide();
-            $.ajax({
-                url: '/stemroi/api/majordd',
-                type: 'POST',
-                dataType: 'json',
-                contentType: 'application/json',
-                data: JSON.stringify({ unitid: $('#unislist :selected').val()}),
-                success: function(result) {
-                    // Clear out dropdown
-                    $("#majorlist").empty();
-                    $("#majorlist").append($("<option></option>").text(" ").val(" "));
-                    // Source (see data and url datagrid properties): https://www.jeasyui.com/documentation/datagrid.php
-                    $('#roi_by_state').datagrid({title:"ROI information is not available for all majors in all states",data:[],url:null});
-                    // Re-populate based on university selection
-                    $.each(result, function(index, item) {
-                        $("#majorlist").append(
-                            $("<option></option>")
-                            .text(item.major)
-                            .val(item.cip)
-                        );
-                    });
-                },
-                error: function(e) {
-                    console.log(e);
-                }
-             });
-        });
-
-        $('#majorlist').change(function() {
-            var majorListURL = '/stemroi/api/roimajorbystate/' + $('#majorlist :selected').val();
-            //http://www.jeasyui.com/forum/index.php?topic=4216.0
-            var roi_datagrid_title = "ROI information for " +
-                $('#majorlist :selected').text() +
-                " majors by state";
-            $('#roi_by_state').datagrid({
-                url: majorListURL,
-                method: 'get',
-                sortName: 'State',
-                sortOrder: 'asc',
-                remoteSort: false,
-                singleSelect: true,
-                fitColumns: true,
-                title: roi_datagrid_title,
-                columns: [[
-                    { field:'State', title:'State', align:'left', sortable:true, width:"15%" },
-                    { field:'AveTuition', title:'Average Tuition ($)', align:'right', sortable:true, width:"18%" },
-                    { field:'AveStart', title:'Average Starting Salary ($)', align:'right', sortable:true, width:"25%" },
-                    { field:'AvePeak', title:'Average Peak Salary ($)', align:'right', sortable:true, width:"23%" },
-                    { field:'TenYRROI', title:'10-Year ROI Score', align:'right', sortable:true, width:"17%" }
-                ]]
+            // Populates 'unislist' select list (middle-left) based on state dropdown
+            $('#statelist').change(function() {
+                $("#unislist").show();
+                $("#unisroi").hide();
+                $.ajax({
+                    url: '/stemroi/api/universitydd',
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    // Get state selected and convert the object to a string
+                    // https://stackoverflow.com/questions/6323338/jquery-ajax-posting-json-to-webservice
+                    data: JSON.stringify({
+                        fips: $('#statelist :selected').val()
+                    }),
+                    success: function(result) {
+                        // Clear out dropdown of universities and majors if statelist changes
+                        $("#unislist").empty();
+                        $("#unislist").append($("<option></option>").text(" ").val(" "));
+                        $("#majorlist").empty();
+                        $("#majorlist").append($("<option></option>").text(" ").val(" "));
+                        // Source (see data and url datagrid properties): https://www.jeasyui.com/documentation/datagrid.php
+                        $('#roi_by_state').datagrid({
+                            title: "ROI information is not available for all majors in all states",
+                            data: [],
+                            url: null
+                        });
+                        // (Re-)populate based on state selection
+                        $.each(result, function(index, item) {
+                            $("#unislist").append( // Append an object to the inside of the select box
+                                $("<option></option>")
+                                .text(item.university_name)
+                                .val(item.unitid)
+                            );
+                        });
+                    },
+                    error: function(e) {
+                        console.log(e);
+                    }
+                });
             });
-            // University ROI calc here!!!
-            $.ajax({
-                url: '/stemroi/api/university_roi',
-                type: 'POST',
-                dataType: 'json',
-                contentType: 'application/json',
-                data: JSON.stringify({ unitid: $('#unislist :selected').val(), cip: $('#majorlist :selected').val()}),
-                success: function(dataU) {
-                    // Populate university ROI info area
-                    $('#uroi_uni_name').text($('#unislist :selected').text());
-                    $('#uroi_tuition').text(dataU.tuition);
-                    $('#uroi_maj').text($('#majorlist :selected').text());
-                    $('#uroi_ss_state').text($('#statelist :selected').text());
-                    $('#uroi_starting_salary').text(dataU.starting_salary);
-                    $('#uroi_p_state').text($('#statelist :selected').text());
-                    $('#uroi_peak_salary').text(dataU.peak_salary);
-                    $('#uroi_uni_roi').text(dataU.university_roi);
-                    $("#unisroi").show();
-                },
-                error: function(e) {
-                    console.log(e);
-                }
-             });
-        });
 
-    </script>
+
+            // Populates 'majorlist' select list (bottom-left)
+            $('#unislist').change(function() {
+                $("#unisroi").hide();
+                $.ajax({
+                    url: '/stemroi/api/majordd',
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        unitid: $('#unislist :selected').val()
+                    }),
+                    success: function(result) {
+                        // Clear out dropdown
+                        $("#majorlist").empty();
+                        $("#majorlist").append($("<option></option>").text(" ").val(" "));
+                        // Source (see data and url datagrid properties): https://www.jeasyui.com/documentation/datagrid.php
+                        $('#roi_by_state').datagrid({
+                            title: "ROI information is not available for all majors in all states",
+                            data: [],
+                            url: null
+                        });
+                        // Re-populate based on university selection
+                        $.each(result, function(index, item) {
+                            $("#majorlist").append(
+                                $("<option></option>")
+                                .text(item.major)
+                                .val(item.cip)
+                            );
+                        });
+                    },
+                    error: function(e) {
+                        console.log(e);
+                    }
+                });
+            });
+
+            //Once the major is selected, populate the datagrid in bottom right
+            $('#majorlist').change(function() {
+                var majorListURL = '/stemroi/api/roimajorbystate/' + $('#majorlist :selected').val();
+                //http://www.jeasyui.com/forum/index.php?topic=4216.0
+                var roi_datagrid_title = "ROI information for " +
+                    $('#majorlist :selected').text() +
+                    " majors by state";
+                $('#roi_by_state').datagrid({
+                    url: majorListURL,
+                    method: 'get',
+                    sortName: 'State',
+                    sortOrder: 'asc',
+                    remoteSort: false,
+                    singleSelect: true,
+                    fitColumns: true,
+                    title: roi_datagrid_title,
+                    columns: [
+                        [{
+                                field: 'State',
+                                title: 'State',
+                                align: 'left',
+                                sortable: true,
+                                width: "15%"
+                            },
+                            {
+                                field: 'AveTuition',
+                                title: 'Average Tuition ($)',
+                                align: 'right',
+                                sortable: true,
+                                width: "18%"
+                            },
+                            {
+                                field: 'AveStart',
+                                title: 'Average Starting Salary ($)',
+                                align: 'right',
+                                sortable: true,
+                                width: "25%"
+                            },
+                            {
+                                field: 'AvePeak',
+                                title: 'Average Peak Salary ($)',
+                                align: 'right',
+                                sortable: true,
+                                width: "23%"
+                            },
+                            {
+                                field: 'TenYRROI',
+                                title: '10-Year ROI Score',
+                                align: 'right',
+                                sortable: true,
+                                width: "17%"
+                            }
+                        ]
+                    ]
+                });
+                // University ROI calc here!!!
+                $.ajax({
+                    url: '/stemroi/api/university_roi',
+                    type: 'POST',
+                    dataType: 'json',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        unitid: $('#unislist :selected').val(),
+                        cip: $('#majorlist :selected').val()
+                    }),
+                    success: function(dataU) {
+                        // Populate university ROI info area
+                        $('#uroi_uni_name').text($('#unislist :selected').text());
+                        $('#uroi_tuition').text(dataU.tuition);
+                        $('#uroi_maj').text($('#majorlist :selected').text());
+                        $('#uroi_ss_state').text($('#statelist :selected').text());
+                        $('#uroi_starting_salary').text(dataU.starting_salary);
+                        $('#uroi_p_state').text($('#statelist :selected').text());
+                        $('#uroi_peak_salary').text(dataU.peak_salary);
+                        $('#uroi_uni_roi').text(dataU.university_roi);
+                        $("#unisroi").show();
+                    },
+                    error: function(e) {
+                        console.log(e);
+                    }
+                });
+            });
+        </script>
     </div>
     <!--Map Tabs-->
     <div id="allmaps" data-options="region:'center', split:true" class="easyui-tabs">
 
-            <!--University points map-->
-            <div id="map" title="University Locations" data-options="closable:true"></div>
-            <!--Percentage of graduates in 2015 vs 2014 Job Opportunities map-->
-            <div id="gradmap" title="Graduates vs Available Jobs" data-options="closable:true" style="height:100%; padding:20px"></div>
+        <!--University points map-->
+        <div id="map" title="University Locations" data-options="closable:true"></div>
 
-            <!--ROI 10 years after graduation map-->
-            <div id="roimap" title="ROI 10 Years after Graduation" data-options="closable:true" style="height:100%; padding:20px"></div>
+        <!--Percentage of graduates in 2015 vs 2014 Job Opportunities map-->
+        <div id="gradmap" title="Graduates vs Available Jobs" data-options="closable:true" style="height:100%; padding:20px"></div>
 
+        <!--ROI 10 years after graduation map-->
+        <div id="roimap" title="ROI 10 Years after Graduation" data-options="closable:true" style="height:100%; padding:20px"></div>
 
     </div>
 
 
-    <!--create map panel tabs and create on click event listener
-    //Event Listenr based on this code: https://github.com/waylau/jquery-easyui/blob/master/demo/tabs/hover.html-->
+    <!--Create map panel tabs and create on click event listener
+    Event Listenr based on this code: https://github.com/waylau/jquery-easyui/blob/master/demo/tabs/hover.html-->
     <script type="text/javascript">
-
-        $(function(){
+        $(function() {
             var tabs = $('#allmaps').tabs().tabs('tabs');
-            for(var i=0; i<tabs.length; i++){
-                tabs[i].panel('options').tab.unbind().bind('onselect',{index:i},function(e){
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].panel('options').tab.unbind().bind('onselect', {
+                    index: i
+                }, function(e) {
                     $('#allmaps').tabs('select', e.data.index);
                 });
             }
         });
-
     </script>
 
-    <!--WORKING VERSION University Locations using Google Map-->
-    <!-- <script>
 
-            var infowindow = null;
-            var map = null;
-            var prev_infoWindow = false;
-
-            function initMap() {
-
-                var mapOpts = {
-                    zoom: 4,
-                    center: new google.maps.LatLng(49,-110),
-                    streetViewControl: false,
-                    mapTypeControl: false
-                };
-
-                map = new google.maps.Map(document.getElementById("map"), mapOpts);
-
-                /* Google Map - Silver basemap styling*/
-                var visStyles = [
-                    {
-                    "elementType": "geometry",
-                    "stylers": [
-                      {
-                        "color": "#f5f5f5"
-                      }
-                    ]
-                  },
-                  {
-                    "elementType": "labels.icon",
-                    "stylers": [
-                      {
-                        "visibility": "off"
-                      }
-                    ]
-                  },
-                  {
-                    "elementType": "labels.text.fill",
-                    "stylers": [
-                      {
-                        "color": "#616161"
-                      }
-                    ]
-                  },
-                  {
-                    "elementType": "labels.text.stroke",
-                    "stylers": [
-                      {
-                        "color": "#f5f5f5"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "administrative.country",
-                    "elementType": "stroke",
-                    "stylers": [
-                      {
-                        "color": "#b3b3b3"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "administrative.country",
-                    "elementType": "labels.text.fill",
-                    "stylers": [
-                      {
-                        "visibility": "off"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "administrative.province",
-                    "elementType": "stroke",
-                    "stylers": [
-                      {
-                        "color": "#4c3758"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "administrative.province",
-                    "elementType": "labels.text",
-                    "stylers": [
-                      {
-                        "color": "#b3b3b3"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "administrative.province",
-                    "elementType": "labels.text.fill",
-                    "stylers": [
-                      {
-                        "visibility": "off"
-                      }
-                    ]
-                  },
-
-                  {
-                    "featureType": "administrative.land_parcel",
-                    "elementType": "labels",
-                    "stylers": [
-                      {
-                        "visibility": "off"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "administrative.land_parcel",
-                    "elementType": "labels.text.fill",
-                    "stylers": [
-                      {
-                        "color": "#bdbdbd"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "poi",
-                    "elementType": "geometry",
-                    "stylers": [
-                      {
-                        "color": "#eeeeee"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "poi",
-                    "elementType": "labels.text",
-                    "stylers": [
-                      {
-                        "visibility": "off"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "poi",
-                    "elementType": "labels.text.fill",
-                    "stylers": [
-                      {
-                        "color": "#757575"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "poi.business",
-                    "stylers": [
-                      {
-                        "visibility": "off"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "poi.park",
-                    "elementType": "geometry",
-                    "stylers": [
-                      {
-                        "color": "#e5e5e5"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "poi.park",
-                    "elementType": "labels.text",
-                    "stylers": [
-                      {
-                        "visibility": "off"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "poi.park",
-                    "elementType": "labels.text.fill",
-                    "stylers": [
-                      {
-                        "color": "#9e9e9e"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "road",
-                    "elementType": "geometry",
-                    "stylers": [
-                      {
-                        "color": "#ffffff"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "road.arterial",
-                    "elementType": "labels.text.fill",
-                    "stylers": [
-                      {
-                        "color": "#757575"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "road.highway",
-                    "elementType": "geometry",
-                    "stylers": [
-                      {
-                        "color": "#dadada"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "road.highway",
-                    "elementType": "labels.text.fill",
-                    "stylers": [
-                      {
-                        "color": "#616161"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "road.local",
-                    "elementType": "labels",
-                    "stylers": [
-                      {
-                        "visibility": "off"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "road.local",
-                    "elementType": "labels.text.fill",
-                    "stylers": [
-                      {
-                        "color": "#9e9e9e"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "transit.line",
-                    "elementType": "geometry",
-                    "stylers": [
-                      {
-                        "color": "#e5e5e5"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "transit.station",
-                    "elementType": "geometry",
-                    "stylers": [
-                      {
-                        "color": "#eeeeee"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "water",
-                    "elementType": "geometry",
-                    "stylers": [
-                      {
-                        "color": "#c9c9c9"
-                      }
-                    ]
-                  },
-                  {
-                    "featureType": "water",
-                    "elementType": "labels.text.fill",
-                    "stylers": [
-                      {
-                        "color": "#9e9e9e"
-                      }
-                    ]
-                  }
-                ];
-                map.setOptions({styles: visStyles});
-            }
-
-
-            function createMarker(point,info,map,icon) {
-
-                var markerOpts = {
-                    position: point,
-                    map: map,
-                    icon: icon
-                };
-
-                var marker = new google.maps.Marker(markerOpts);
-
-                var infoWindowOpts = { content: info };
-                var infoWindow = new google.maps.InfoWindow(infoWindowOpts);
-
-
-                //https://stackoverflow.com/questions/2223574/google-maps-auto-close-open-infowindows
-                google.maps.event.addListener(marker, 'click', function() {
-                    if( prev_infoWindow ) {
-                        prev_infoWindow.close();
-                    }
-
-                    prev_infoWindow = infoWindow;
-                    infoWindow.open(map, marker);
-                });
-            }
-
-            $.getJSON("/stemroi/api/unis", null, function(result) {
-                var icon = { path: google.maps.SymbolPath.CIRCLE,
-                            fillOpacity: 1.0,
-                            fillColor: "red",
-                            strokeOpacity: 1.0,
-                            strokeColor: "black",
-                            strokeWeight: 0.5,
-                            scale: 4
-                    };
-
-                for (var i = 0; i < result.length; i++) {
-                    var lat = result[i].latitude;
-                    var long = result[i].longitude;
-                    var latLng = new google.maps.LatLng(lat, long);
-
-                    var pt = {
-                        "uname": result[i].university_name,
-                        "tuition": result[i].tuition*4
-                    };
-
-                    createMarker(latLng, 'University: <strong>'
-                                    + pt.uname + '</strong><br />'
-                                    + 'Tuition: $ <strong>'
-                                    + pt.tuition
-                                    + '<br />',
-                                    map, icon);
-
-                }
-            });
-        </script> -->
-
-    <!--Experimental VERSION University Locations using Google Map-->
+    <!--University Locations using Google Map-->
     <script>
-
+        //Clear out previous infowindow and map markers
         var infowindow = null;
         var map = null;
         var prev_infoWindow = false;
@@ -571,7 +288,7 @@
 
             var mapOpts = {
                 zoom: 4,
-                center: new google.maps.LatLng(49,-110),
+                center: new google.maps.LatLng(49, -110),
                 streetViewControl: false,
                 mapTypeControl: false
             };
@@ -579,261 +296,206 @@
             map = new google.maps.Map(document.getElementById("map"), mapOpts);
 
             /* Google Map - Silver basemap styling */
-            var visStyles = [
+            var visStyles = [{
+                    "elementType": "geometry",
+                    "stylers": [{
+                        "color": "#f5f5f5"
+                    }]
+                },
                 {
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#f5f5f5"
-                  }
-                ]
-              },
-              {
-                "elementType": "labels.icon",
-                "stylers": [
-                  {
-                    "visibility": "off"
-                  }
-                ]
-              },
-              {
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#616161"
-                  }
-                ]
-              },
-              {
-                "elementType": "labels.text.stroke",
-                "stylers": [
-                  {
-                    "color": "#f5f5f5"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative.country",
-                "elementType": "stroke",
-                "stylers": [
-                  {
-                    "color": "#b3b3b3"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative.country",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "visibility": "off"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative.province",
-                "elementType": "stroke",
-                "stylers": [
-                  {
-                    "color": "#4c3758"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative.province",
-                "elementType": "labels.text",
-                "stylers": [
-                  {
-                    "color": "#b3b3b3"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative.province",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "visibility": "off"
-                  }
-                ]
-              },
+                    "elementType": "labels.icon",
+                    "stylers": [{
+                        "visibility": "off"
+                    }]
+                },
+                {
+                    "elementType": "labels.text.fill",
+                    "stylers": [{
+                        "color": "#616161"
+                    }]
+                },
+                {
+                    "elementType": "labels.text.stroke",
+                    "stylers": [{
+                        "color": "#f5f5f5"
+                    }]
+                },
+                {
+                    "featureType": "administrative.country",
+                    "elementType": "stroke",
+                    "stylers": [{
+                        "color": "#b3b3b3"
+                    }]
+                },
+                {
+                    "featureType": "administrative.country",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{
+                        "visibility": "off"
+                    }]
+                },
+                {
+                    "featureType": "administrative.province",
+                    "elementType": "stroke",
+                    "stylers": [{
+                        "color": "#4c3758"
+                    }]
+                },
+                {
+                    "featureType": "administrative.province",
+                    "elementType": "labels.text",
+                    "stylers": [{
+                        "color": "#b3b3b3"
+                    }]
+                },
+                {
+                    "featureType": "administrative.province",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{
+                        "visibility": "off"
+                    }]
+                },
 
-              {
-                "featureType": "administrative.land_parcel",
-                "elementType": "labels",
-                "stylers": [
-                  {
-                    "visibility": "off"
-                  }
-                ]
-              },
-              {
-                "featureType": "administrative.land_parcel",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#bdbdbd"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#eeeeee"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi",
-                "elementType": "labels.text",
-                "stylers": [
-                  {
-                    "visibility": "off"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#757575"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi.business",
-                "stylers": [
-                  {
-                    "visibility": "off"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi.park",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#e5e5e5"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi.park",
-                "elementType": "labels.text",
-                "stylers": [
-                  {
-                    "visibility": "off"
-                  }
-                ]
-              },
-              {
-                "featureType": "poi.park",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#9e9e9e"
-                  }
-                ]
-              },
-              {
-                "featureType": "road",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#ffffff"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.arterial",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#757575"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.highway",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#dadada"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.highway",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#616161"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.local",
-                "elementType": "labels",
-                "stylers": [
-                  {
-                    "visibility": "off"
-                  }
-                ]
-              },
-              {
-                "featureType": "road.local",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#9e9e9e"
-                  }
-                ]
-              },
-              {
-                "featureType": "transit.line",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#e5e5e5"
-                  }
-                ]
-              },
-              {
-                "featureType": "transit.station",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#eeeeee"
-                  }
-                ]
-              },
-              {
-                "featureType": "water",
-                "elementType": "geometry",
-                "stylers": [
-                  {
-                    "color": "#c9c9c9"
-                  }
-                ]
-              },
-              {
-                "featureType": "water",
-                "elementType": "labels.text.fill",
-                "stylers": [
-                  {
-                    "color": "#9e9e9e"
-                  }
-                ]
-              }
+                {
+                    "featureType": "administrative.land_parcel",
+                    "elementType": "labels",
+                    "stylers": [{
+                        "visibility": "off"
+                    }]
+                },
+                {
+                    "featureType": "administrative.land_parcel",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{
+                        "color": "#bdbdbd"
+                    }]
+                },
+                {
+                    "featureType": "poi",
+                    "elementType": "geometry",
+                    "stylers": [{
+                        "color": "#eeeeee"
+                    }]
+                },
+                {
+                    "featureType": "poi",
+                    "elementType": "labels.text",
+                    "stylers": [{
+                        "visibility": "off"
+                    }]
+                },
+                {
+                    "featureType": "poi",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{
+                        "color": "#757575"
+                    }]
+                },
+                {
+                    "featureType": "poi.business",
+                    "stylers": [{
+                        "visibility": "off"
+                    }]
+                },
+                {
+                    "featureType": "poi.park",
+                    "elementType": "geometry",
+                    "stylers": [{
+                        "color": "#e5e5e5"
+                    }]
+                },
+                {
+                    "featureType": "poi.park",
+                    "elementType": "labels.text",
+                    "stylers": [{
+                        "visibility": "off"
+                    }]
+                },
+                {
+                    "featureType": "poi.park",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{
+                        "color": "#9e9e9e"
+                    }]
+                },
+                {
+                    "featureType": "road",
+                    "elementType": "geometry",
+                    "stylers": [{
+                        "color": "#ffffff"
+                    }]
+                },
+                {
+                    "featureType": "road.arterial",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{
+                        "color": "#757575"
+                    }]
+                },
+                {
+                    "featureType": "road.highway",
+                    "elementType": "geometry",
+                    "stylers": [{
+                        "color": "#dadada"
+                    }]
+                },
+                {
+                    "featureType": "road.highway",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{
+                        "color": "#616161"
+                    }]
+                },
+                {
+                    "featureType": "road.local",
+                    "elementType": "labels",
+                    "stylers": [{
+                        "visibility": "off"
+                    }]
+                },
+                {
+                    "featureType": "road.local",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{
+                        "color": "#9e9e9e"
+                    }]
+                },
+                {
+                    "featureType": "transit.line",
+                    "elementType": "geometry",
+                    "stylers": [{
+                        "color": "#e5e5e5"
+                    }]
+                },
+                {
+                    "featureType": "transit.station",
+                    "elementType": "geometry",
+                    "stylers": [{
+                        "color": "#eeeeee"
+                    }]
+                },
+                {
+                    "featureType": "water",
+                    "elementType": "geometry",
+                    "stylers": [{
+                        "color": "#c9c9c9"
+                    }]
+                },
+                {
+                    "featureType": "water",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{
+                        "color": "#9e9e9e"
+                    }]
+                }
             ];
-            map.setOptions({styles: visStyles});
+            map.setOptions({
+                styles: visStyles
+            });
         }
 
 
-        function createMarker(point,info,uni_name,map,icon) {
+        function createMarker(point, info, uni_name, map, icon) {
 
             var markerOpts = {
                 position: point,
@@ -843,29 +505,35 @@
 
             var marker = new google.maps.Marker(markerOpts);
 
-            var infoWindowOpts = { content: info };
+            var infoWindowOpts = {
+                content: info
+            };
             var infoWindow = new google.maps.InfoWindow(infoWindowOpts);
 
             google.maps.event.addListener(marker, 'click', function() {
-                if( prev_infoWindow ) {
+                if (prev_infoWindow) {
                     prev_infoWindow.close();
                 }
                 prev_infoWindow = infoWindow;
                 infoWindow.open(map, marker);
             });
-            // Put in markers array--and include university name (for later use)
-            markers.push({mark:marker, uni:uni_name});
+
+            // Put markers in an array--and include university name (for later use)
+            markers.push({
+                mark: marker,
+                uni: uni_name
+            });
         }
 
 
         $('#statelist').change(function() {
-            // Remove markers
+            // Remove markers is the state changes
             // See https://stackoverflow.com/questions/20101805/how-to-remove-a-single-marker-from-google-map
             for (var i = 0; i < markers.length; i++) {
                 markers[i].mark.setMap(null);
             }
-            // Reset markers array
 
+            // Reset markers array
             markers = [];
 
             //Load in statelist data endpoint
@@ -877,14 +545,15 @@
                 contentType: 'application/json',
                 success: function(result) {
 
-                    var icon = { path: google.maps.SymbolPath.CIRCLE,
-                                fillOpacity: 1.0,
-                                fillColor: "red",
-                                strokeOpacity: 1.0,
-                                strokeColor: "black",
-                                strokeWeight: 0.5,
-                                scale: 4
-                        };
+                    var icon = {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillOpacity: 1.0,
+                        fillColor: "red",
+                        strokeOpacity: 1.0,
+                        strokeColor: "black",
+                        strokeWeight: 0.5,
+                        scale: 4
+                    };
 
                     //Create the bounds object to hold marker coordinates
                     var bounds = new google.maps.LatLngBounds();
@@ -893,7 +562,6 @@
                     for (var i = 0; i < result.length; i++) {
 
                         //if statelist fips val == dataMarker fips value, then create marker
-
                         var lat = result[i].latitude;
                         var long = result[i].longitude;
                         var latLng = new google.maps.LatLng(lat, long);
@@ -907,17 +575,17 @@
                             "tuition": result[i].tuition
                         };
 
-                        createMarker(latLng, 'University: <strong>'
-                                        + pt.university_name + '</strong><br />'
-                                        + 'Tuition: $ <strong>'
-                                        + pt.tuition
-                                        + '<br />',
-                                        pt.university_name,
-                                        map, icon);
+                        createMarker(latLng, 'University: <strong>' +
+                            pt.university_name + '</strong><br />' +
+                            'Tuition: $ <strong>' +
+                            pt.tuition +
+                            '<br />',
+                            pt.university_name,
+                            map, icon);
 
                     };
-                //Zoom the map to the extent of the selected state markers.
-                map.fitBounds(bounds);
+                    //Zoom the map to the extent of the selected state markers.
+                    map.fitBounds(bounds);
                 },
 
                 error: function(e) {
@@ -928,189 +596,196 @@
         });
 
         $('#unislist').change(function() {
-             // Get selected university
-             var selected_uni = $('#unislist :selected').text();
-             // Find  marker by uni
-             for (var i = 0; i < markers.length; i++) {
-                 // Add each marker in the state to the map
-                 markers[i].mark.setMap(map);
-                 // If the marker is -NOT- the selected univerity
-                 if (markers[i].uni != selected_uni) {
-                     // Remove the marker
-                     // See https://stackoverflow.com/questions/20101805/how-to-remove-a-single-marker-from-google-map
-                     markers[i].mark.setMap(null);
-                 }
-             }
+            // Get selected university
+            var selected_uni = $('#unislist :selected').text();
+            // Find  marker by uni
+            for (var i = 0; i < markers.length; i++) {
+                // Add each marker in the state to the map
+                markers[i].mark.setMap(map);
+                // If the marker is -NOT- the selected univerity
+                if (markers[i].uni != selected_uni) {
+                    // Remove the marker
+                    // See https://stackoverflow.com/questions/20101805/how-to-remove-a-single-marker-from-google-map
+                    markers[i].mark.setMap(null);
+                }
+            }
         });
-
     </script>
 
 
     <!--Conferred Degrees vs Available Jobs Map using D3
     Based on example from Interactive Data Visualization https://github.com/alignedleft/d3-book/blob/master/chapter_14/05_choropleth.html-->
     <script type="text/javascript">
+        $('#majorlist').change(function() {
+            d3.select("#gradmap").selectAll("svg").remove();
 
-    $('#majorlist').change(function() {
-        d3.select("#gradmap").selectAll("svg").remove();
+            //Load in graduate data endpoint
+            var gradURL = '/stemroi/api/grads/' + $('#majorlist :selected').val();
+            $.ajax({
+                url: gradURL,
+                type: 'get',
+                dataType: 'json',
+                contentType: 'application/json',
+                // Get major selected and convert the object to a string
+                // https://stackoverflow.com/questions/6323338/jquery-ajax-posting-json-to-webservice
 
-        //Load in graduate data endpoint
-        var gradURL = '/stemroi/api/grads/' + $('#majorlist :selected').val();
-        $.ajax({
-            url: gradURL,
-            type: 'get',
-            dataType: 'json',
-            contentType: 'application/json',
-            // Get major selected and convert the object to a string
-            // https://stackoverflow.com/questions/6323338/jquery-ajax-posting-json-to-webservice
+                data: JSON.stringify({
+                    cip: $('#majorlist :selected').val()
+                }),
 
-            data: JSON.stringify({ cip: $('#majorlist :selected').val()}),
+                success: function(dataG) {
+                    //Set margin surrounding SVG canvas.
+                    var marginG = {
+                        top: 20,
+                        right: 10,
+                        bottom: 20,
+                        left: 10
+                    };
 
-            success: function(dataG) {
+                    //Width and height
+                    var w = $("#allmaps").width() * 0.75 - marginG.left - marginG.right;
+                    var h = $("#allmaps").height() - marginG.top - marginG.bottom;
 
-                //Set margin surrounding SVG canvas.
-                var marginG = {top: 20, right: 10, bottom: 20, left: 10};
+                    //Define map projection
+                    var projection = d3.geoAlbersUsa()
+                        .translate([w / 2, h / 2]) // translate to center of screen
+                        .scale([w]); // scale down map to see entire US
 
-                //Width and height
-                var w = $("#allmaps").width() * 0.75 - marginG.left - marginG.right;
-            	var h = $("#allmaps").height() - marginG.top - marginG.bottom;
+                    //Define path generator
+                    var path = d3.geoPath()
+                        .projection(projection);
 
-                //Define map projection
-            	var projection = d3.geoAlbersUsa()
-            	   .translate([w/2, h/2]) // translate to center of screen
-                   .scale([w]);        // scale down map to see entire US
+                    //Define scale to sort data values into color buckets
+                    //Colors derived from ColorBrewer, by Cynthia Brewer,
+                    var color = d3.scaleThreshold()
+                        .domain([50, 100, 5000]) //partial, near, saturated
+                        .range(["rgb(44,123,182)", "rgb(255,181,73)", "rgb(215,25,28)"]); //dark blue, mango, red;
 
-                //Define path generator
-            	var path = d3.geoPath()
-            	   .projection(projection);
-
-                //Define scale to sort data values into color buckets
-                //Colors derived from ColorBrewer, by Cynthia Brewer,
-                var color = d3.scaleThreshold()
-                   .domain([50, 100, 5000]) //partial, near, saturated
-                   .range(["rgb(44,123,182)","rgb(255,181,73)","rgb(215,25,28)"]); //dark blue, mango, red;
-
-               //Custom tooltip
-               var tipG = d3.tip()
-                    .attr('class', 'd3-tip')
-                    .offset([-10, 0])
-                    .html(function(d) {
-                        if (d.properties.jobs_percent) {
-                            return  "<strong>State: </strong> <span style='color:lightblue'>" + d.properties.name + "</span><br />" +
+                    //Custom tooltip
+                    var tipG = d3.tip()
+                        .attr('class', 'd3-tip')
+                        .offset([-10, 0])
+                        .html(function(d) {
+                            if (d.properties.jobs_percent) {
+                                return "<strong>State: </strong> <span style='color:lightblue'>" + d.properties.name + "</span><br />" +
                                     "<strong>Percent Job Saturation: </strong> <span style='color:lightblue'>" + d.properties.jobs_percent + "%</span><br />" +
                                     "<strong>Graduates: </strong> <span style='color:lightblue'>" + d.properties.cd + "</span><br />" +
                                     "<strong>Annual Jobs Open (2014): </strong> <span style='color:lightblue'>" + d.properties.job_open + "</span>";
-                       } else {
-                           return "<strong>No data available</strong>";
-                       }
-                   });
+                            } else {
+                                return "<strong>No data available</strong>";
+                            }
+                        });
 
-                //Create SVG element
-                //Understanding margins: https://bl.ocks.org/mbostock/3019563
-                var svgG = d3.select("#gradmap").append("svg")
+                    //Create SVG element
+                    //Understanding margins: https://bl.ocks.org/mbostock/3019563
+                    var svgG = d3.select("#gradmap").append("svg")
                         .attr("width", w + marginG.left + marginG.right)
                         .attr("height", h + marginG.top + marginG.bottom)
-                    .append("g")
+                        .append("g")
                         .attr("transform", "translate(" + marginG.left + "," + marginG.top + ")");
 
-                //Modified Legend Code from Mike Bostock: http://bl.ocks.org/mbostock/3888852
-                //var legendText = ["Saturated Job Market (>100%)","Partially Saturated Job Market (50-100%)","Minimally Saturated Job Market (<50%)"];
-                var legendText = ["Saturated (>100%)","Partially Saturated (50-100%)","Minimally Saturated (<50%)"];
+                    //Modified Legend Code from Mike Bostock: http://bl.ocks.org/mbostock/3888852
+                    var legendText = ["Saturated (>100%)", "Partially Saturated (50-100%)", "Minimally Saturated (<50%)"];
 
-                var legend = svgG.append("svg")
-                    .attr('x', (w*.6))
-                    .selectAll("g")
-                    .data([100,50, 0])
-                    .enter()
-                    .append("g")
-                    .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; })
-                    .style("position", "right");
+                    var legend = svgG.append("svg")
+                        .attr('x', (w * .6))
+                        .selectAll("g")
+                        .data([100, 50, 0])
+                        .enter()
+                        .append("g")
+                        .attr("transform", function(d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        })
+                        .style("position", "right");
 
-                legend.append("rect")
-                    .attr("width", 18)
-                    .attr("height", 18)
-                    .style("fill", color);
+                    legend.append("rect")
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
-                legend.append("text")
-                    .data(legendText)
-                    .attr("x", 24) //Horizontal text spacing from legend box
-                    .attr("y", 9)
-                    .attr("dy", ".35em")
-                    .text(function(d) { return d; });
+                    legend.append("text")
+                        .data(legendText)
+                        .attr("x", 24) //Horizontal text spacing from legend box
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .text(function(d) {
+                            return d;
+                        });
 
-                //This SVG element creates a container for the title and wraps text.
-                //http://bl.ocks.org/jebeck/10699411
-                svgG.append("foreignObject")
-                        .attr("width", w/2)
+                    //This SVG element creates a container for the title and wraps text.
+                    //http://bl.ocks.org/jebeck/10699411
+                    svgG.append("foreignObject")
+                        .attr("width", w / 2)
                         .attr("height", 100)
-                    .append("xhtml:body")
+                        .append("xhtml:body")
                         .style("font", "14px 'Arial'")
                         .style("font-weight", "bold")
                         .html("Percentage of Job Market Saturation for " + $('#majorlist :selected').text() + " Majors");
 
-                svgG.call(tipG);
+                    svgG.call(tipG);
 
-                //Load in grad endpoint data
-                d3.json(gradURL, function(dataG) {
+                    //Load in grad endpoint data
+                    d3.json(gradURL, function(dataG) {
 
-                    //Load in GeoJSON data
-                    var url = ("{{ url_for('static', filename='js/us-states.json') }}");
-                    d3.json(url, function(json) {
+                        //Load in GeoJSON data
+                        var url = ("{{ url_for('static', filename='js/us-states.json') }}");
+                        d3.json(url, function(json) {
 
-                        //Merge the grad data and GeoJSON
-    					//Loop through once for each grad data value
-    					for (var i = 0; i < dataG.length; i++) {
+                            //Merge the grad data and GeoJSON
+                            //Loop through once for each grad data value
+                            for (var i = 0; i < dataG.length; i++) {
 
-    						//Grab state name
-    						var dataState = dataG[i].area_name;
+                                //Grab state name
+                                var dataState = dataG[i].area_name;
 
-    						//Find the corresponding state inside the GeoJSON
-    						for (var j = 0; j < json.features.length; j++) {
+                                //Find the corresponding state inside the GeoJSON
+                                for (var j = 0; j < json.features.length; j++) {
 
-    							var jsonState = json.features[j].properties.name;
+                                    var jsonState = json.features[j].properties.name;
 
-    							if (dataState == jsonState) {
+                                    if (dataState == jsonState) {
 
-    								//Copy the grad data value into the JSON
-                                	json.features[j].properties.jobs_percent = parseFloat(dataG[i].jobs_percent);
-                                    json.features[j].properties.cd = dataG[i].cd;
-                                    json.features[j].properties.job_open = dataG[i].job_open;
+                                        //Copy the grad data value into the JSON
+                                        json.features[j].properties.jobs_percent = parseFloat(dataG[i].jobs_percent);
+                                        json.features[j].properties.cd = dataG[i].cd;
+                                        json.features[j].properties.job_open = dataG[i].job_open;
 
-    								//Stop looking through the JSON
-    								break;
-    							}
-    						}
-    					}
+                                        //Stop looking through the JSON
+                                        break;
+                                    }
+                                }
+                            }
 
-                	    //Bind data and create one path per GeoJSON feature
-    					svgG.selectAll("path")
-    					    .data(json.features)
-    					    .enter()
-        					.append("path")
-        					.attr("d", path)
-                            .attr("stroke", "#fff")
-        					.style("fill", function(d) {
-        					    //Get data value
-    					   		var value = d.properties.jobs_percent;
+                            //Bind data and create one path per GeoJSON feature
+                            svgG.selectAll("path")
+                                .data(json.features)
+                                .enter()
+                                .append("path")
+                                .attr("d", path)
+                                .attr("stroke", "#fff")
+                                .style("fill", function(d) {
+                                    //Get data value
+                                    var value = d.properties.jobs_percent;
 
-    					   		if (value) {
-                                	//If value exists…
-    						   		return color(value);
-    					   		} else {
-    					   			//If value is undefined…
-    						   		return "rgb(200,200,200)";
-    					   		}
+                                    if (value) {
+                                        //If value exists
+                                        return color(value);
+                                    } else {
+                                        //If value is undefined
+                                        return "rgb(200,200,200)";
+                                    }
 
-    					    })
-                            .on('mouseover', tipG.show)
-                            .on('mouseout', tipG.hide);
+                                })
+                                .on('mouseover', tipG.show)
+                                .on('mouseout', tipG.hide);
+                        });
                     });
-                });
-            },
-            error: function(e) {
-                console.log(e);
-            }
+                },
+                error: function(e) {
+                    console.log(e);
+                }
+            });
         });
-    });
     </script>
 
 
@@ -1120,168 +795,180 @@
     <!--ROI Map using D3
     Based on example from Interactive Data Visualization https://github.com/alignedleft/d3-book/blob/master/chapter_14/05_choropleth.html-->
     <script type="text/javascript">
+        $('#majorlist').change(function() {
+            d3.select("#roimap").selectAll("svg").remove();
 
-    $('#majorlist').change(function() {
-        d3.select("#roimap").selectAll("svg").remove();
+            //Load in ROI data endpoint
+            var roiURL = '/stemroi/api/roimajorbystate/' + $('#majorlist :selected').val();
+            $.ajax({
+                url: roiURL,
+                type: 'get',
+                dataType: 'json',
+                contentType: 'application/json',
 
-        //Load in ROI data endpoint
-        var roiURL = '/stemroi/api/roimajorbystate/' + $('#majorlist :selected').val();
-        $.ajax({
-            url: roiURL,
-            type: 'get',
-            dataType: 'json',
-            contentType: 'application/json',
-            // Get major selected and convert the object to a string
-            // https://stackoverflow.com/questions/6323338/jquery-ajax-posting-json-to-webservice
+                // Get major selected and convert the object to a string
+                // https://stackoverflow.com/questions/6323338/jquery-ajax-posting-json-to-webservice
 
-            data: JSON.stringify({ cip: $('#majorlist :selected').val()}),
+                data: JSON.stringify({
+                    cip: $('#majorlist :selected').val()
+                }),
 
-            success: function(dataR) {
+                success: function(dataR) {
 
-                //Set margin surrounding SVG canvas.
-                var marginR = {top: 20, right: 10, bottom: 20, left: 10};
+                    //Set margin surrounding SVG canvas.
+                    var marginR = {
+                        top: 20,
+                        right: 10,
+                        bottom: 20,
+                        left: 10
+                    };
 
-                //Width and height
-                var w = $("#allmaps").width() * 0.75 - marginR.left - marginR.right;
-            	var h = $("#allmaps").height() - marginR.top - marginR.bottom;
+                    //Width and height
+                    var w = $("#allmaps").width() * 0.75 - marginR.left - marginR.right;
+                    var h = $("#allmaps").height() - marginR.top - marginR.bottom;
 
-                //Define map projection
-            	var projection = d3.geoAlbersUsa()
-            	   .translate([w/2, h/2]) // translate to center of screen
-                   .scale([w]);        // scale down map to see entire US
+                    //Define map projection
+                    var projection = d3.geoAlbersUsa()
+                        .translate([w / 2, h / 2]) // translate to center of screen
+                        .scale([w]); // scale down map to see entire US
 
-                //Define path generator
-            	var path = d3.geoPath()
-            	   .projection(projection);
+                    //Define path generator
+                    var path = d3.geoPath()
+                        .projection(projection);
 
-                //Define scale to sort data values into color buckets
-                //Colors derived from ColorBrewer, by Cynthia Brewer,
-                var color = d3.scaleThreshold()
-                   .domain([25, 50, 75, 100, 200]) //25%, 50%, 75%, over 100%
-                   //.range(["rgb(186,228,188)","rgb(123,204,196)","rgb(67,162,202)","rgb(253,141,60)","rgb(189,0,38)"]); //light green (low ROI) through red(high ROI)
-                   .range(["rgb(240,59,32)","rgb(253,141,60)","rgb(186,228,188)","rgb(123,204,196)","rgb(67,162,202)"]);
+                    //Define scale to sort data values into color buckets
+                    //Colors derived from ColorBrewer, by Cynthia Brewer,
+                    var color = d3.scaleThreshold()
+                        .domain([25, 50, 75, 100, 200]) //25%, 50%, 75%, over 100%
+                        .range(["rgb(240,59,32)", "rgb(253,141,60)", "rgb(186,228,188)", "rgb(123,204,196)", "rgb(67,162,202)"]);
 
-               //Custom tooltip
-               var tipR = d3.tip()
-                    .attr('class', 'd3-tip')
-                    .offset([-10, 0])
-                    .html(function(d) {
-                         //var tenYrROI = d.properties.TenYRROI;
-                        if (d.properties.TenYRROI && d.properties.TenYRROI != 'N/A') {
-                            return  "<strong>State: </strong> <span style='color:lightblue'>" + d.properties.name + "</span><br />" +
+                    //Custom tooltip
+                    var tipR = d3.tip()
+                        .attr('class', 'd3-tip')
+                        .offset([-10, 0])
+                        .html(function(d) {
+                            //var tenYrROI = d.properties.TenYRROI;
+                            if (d.properties.TenYRROI && d.properties.TenYRROI != 'N/A') {
+                                return "<strong>State: </strong> <span style='color:lightblue'>" + d.properties.name + "</span><br />" +
                                     "<strong>ROI 10 years after graduation: </strong> <span style='color:lightblue'>" + d.properties.TenYRROI + "%</span><br />";
-                       } else {
-                           return "<strong>No data available</strong>";
-                       }
-                   });
+                            } else {
+                                return "<strong>No data available</strong>";
+                            }
+                        });
 
-                //Create SVG element
-                //Understanding margins: https://bl.ocks.org/mbostock/3019563
-                var svgR = d3.select("#roimap").append("svg")
+                    //Create SVG element
+                    //Understanding margins: https://bl.ocks.org/mbostock/3019563
+                    var svgR = d3.select("#roimap").append("svg")
                         .attr("width", w + marginR.left + marginR.right)
                         .attr("height", h + marginR.top + marginR.bottom)
-                    .append("g")
+                        .append("g")
                         .attr("transform", "translate(" + marginR.left + "," + marginR.top + ")");
 
-                //Modified Legend Code from Mike Bostock: http://bl.ocks.org/mbostock/3888852
-                //var legendText = ["Saturated (>100%)","Partially Saturated (50-100%)","Minimally Saturated (<50%)"];
-                var legendText = ["High ROI (>100%)","75-100%","50-75%", "25-50%", "Low ROI (>25%)"];
+                    //Modified Legend Code from Mike Bostock: http://bl.ocks.org/mbostock/3888852
+                    //var legendText = ["Saturated (>100%)","Partially Saturated (50-100%)","Minimally Saturated (<50%)"];
+                    var legendText = ["High ROI (>100%)", "75-100%", "50-75%", "25-50%", "Low ROI (>25%)"];
 
-                var legend = svgR.append("svg")
-                    .attr('x', (w*.6))
-                    .selectAll("g")
-                    .data([100, 75, 50, 25,0])
-                    .enter()
-                    .append("g")
-                    .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; })
-                    .style("position", "right");
+                    var legend = svgR.append("svg")
+                        .attr('x', (w * .6))
+                        .selectAll("g")
+                        .data([100, 75, 50, 25, 0])
+                        .enter()
+                        .append("g")
+                        .attr("transform", function(d, i) {
+                            return "translate(0," + i * 20 + ")";
+                        })
+                        .style("position", "right");
 
-                legend.append("rect")
-                    .attr("width", 18)
-                    .attr("height", 18)
-                    .style("fill", color);
+                    legend.append("rect")
+                        .attr("width", 18)
+                        .attr("height", 18)
+                        .style("fill", color);
 
-                legend.append("text")
-                    .data(legendText)
-                    .attr("x", 24) //Horizontal text spacing from legend box
-                    .attr("y", 9)
-                    .attr("dy", ".35em")
-                    .text(function(d) { return d; });
+                    legend.append("text")
+                        .data(legendText)
+                        .attr("x", 24) //Horizontal text spacing from legend box
+                        .attr("y", 9)
+                        .attr("dy", ".35em")
+                        .text(function(d) {
+                            return d;
+                        });
 
-                svgR.append("foreignObject")
-                        .attr("width", w/2)
+                    svgR.append("foreignObject")
+                        .attr("width", w / 2)
                         .attr("height", 100)
-                    .append("xhtml:body")
+                        .append("xhtml:body")
                         .style("font", "14px 'Arial'")
                         .style("font-weight", "bold")
                         .html("Simplified ROI 10 Years After Graduation Based on " + $('#majorlist :selected').text() + " Majors");
 
-                svgR.call(tipR);
+                    svgR.call(tipR);
 
-                //Load in grad endpoint data
-                d3.json(roiURL, function(dataR) {
+                    //Load in grad endpoint data
+                    d3.json(roiURL, function(dataR) {
 
-                    //Load in GeoJSON data
-                    var url = ("{{ url_for('static', filename='js/us-states.json') }}");
-                    d3.json(url, function(json) {
+                        //Load in GeoJSON data
+                        var url = ("{{ url_for('static', filename='js/us-states.json') }}");
+                        d3.json(url, function(json) {
 
-                        //Merge the grad data and GeoJSON
-    					//Loop through once for each grad data value
-    					for (var i = 0; i < dataR.length; i++) {
+                            //Merge the grad data and GeoJSON
+                            //Loop through once for each grad data value
+                            for (var i = 0; i < dataR.length; i++) {
 
-    						//Grab state name
-    						var dataState = dataR[i].State;
+                                //Grab state name
+                                var dataState = dataR[i].State;
 
-    						//Find the corresponding state inside the GeoJSON
-    						for (var j = 0; j < json.features.length; j++) {
+                                //Find the corresponding state inside the GeoJSON
+                                for (var j = 0; j < json.features.length; j++) {
 
-    							var jsonState = json.features[j].properties.name;
+                                    var jsonState = json.features[j].properties.name;
 
-    							if (dataState == jsonState) {
+                                    if (dataState == jsonState) {
 
-    								//Copy the roi data value into the JSON
-                                	json.features[j].properties.TenYRROI = dataR[i].TenYRROI;
-                                	//Stop looking through the JSON
-    								break;
-    							}
-    						}
-    					}
-                        //console.log(json.features);
-                	    //Bind data and create one path per GeoJSON feature
-    					svgR.selectAll("path")
-    					    .data(json.features)
-    					    .enter()
-        					.append("path")
-        					.attr("d", path)
-                            .attr("stroke", "#fff")
-        					.style("fill", function(d) {
-        					    //Get data value
-    					   		var value = d.properties.TenYRROI;
+                                        //Copy the roi data value into the JSON
+                                        json.features[j].properties.TenYRROI = dataR[i].TenYRROI;
+                                        //Stop looking through the JSON
+                                        break;
+                                    }
+                                }
+                            }
 
-    					   		if (value && value != 'N/A') {
-                                	//If value exists…
-    						   		return color(value);
-    					   		} else {
-    					   			//If value is undefined…
-    						   		return "rgb(200,200,200)";
-    					   		}
+                            //Bind data and create one path per GeoJSON feature
+                            svgR.selectAll("path")
+                                .data(json.features)
+                                .enter()
+                                .append("path")
+                                .attr("d", path)
+                                .attr("stroke", "#fff")
+                                .style("fill", function(d) {
+                                    //Get data value
+                                    var value = d.properties.TenYRROI;
 
-    					    })
-                            .on('mouseover', tipR.show)
-                            .on('mouseout', tipR.hide);
+                                    if (value && value != 'N/A') {
+                                        //If value exists…
+                                        return color(value);
+                                    } else {
+                                        //If value is undefined…
+                                        return "rgb(200,200,200)";
+                                    }
+
+                                })
+                                .on('mouseover', tipR.show)
+                                .on('mouseout', tipR.hide);
+                        });
                     });
-                });
-            },
-            error: function(e) {
-                console.log(e);
-            }
+                },
+                error: function(e) {
+                    console.log(e);
+                }
+            });
         });
-    });
     </script>
 
+
+    <!--Bottom panels-->
     <div id="south_side" data-options="region:'south',split:true" style="height:30%">
         <!--http://www.jeasyui.com/demo/main/index.php?plugin=Tabs&-->
-        <div id="d3chartstable" style="width:50%;height:100%; float:left;padding:1px;overflow-y:hidden;position:fixed" class"easyui-tabs">
+        <div id="d3chartstable" style="width:50%;height:100%; float:left;padding:1px;overflow-y:hidden;position:fixed" class "easyui-tabs">
 
             <div id="comptuition" title="Compare Tuition by State" data-options="closable:true" style="height:100%; padding:20px">
                 <div id="tuition_chart"></div>
@@ -1296,15 +983,15 @@
 
         <div id="roitable" style="width:50%;float:right;padding:1px;overflow-y:visible">
             <table id="roi_by_state" class="easyui-datagrid" title="ROI information is not available for all majors in all states" style="align:center">
-            <thead>
-                <tr>
-                    <th data-options="field:'State'">State</th>
-                    <th data-options="field:'AveTuition', align:'right'">Average Tuition ($)</th>
-                    <th data-options="field:'AveStart',align:'right'">Average Starting Salary ($)</th>
-                    <th data-options="field:'AvePeak',align:'right'">Average Peak Salary ($)</th>
-                    <th data-options="field:'TenYRROI', align:'right'">10-Year ROI Score</th>
-                </tr>
-            </thead>
+                <thead>
+                    <tr>
+                        <th data-options="field:'State'">State</th>
+                        <th data-options="field:'AveTuition', align:'right'">Average Tuition ($)</th>
+                        <th data-options="field:'AveStart',align:'right'">Average Starting Salary ($)</th>
+                        <th data-options="field:'AvePeak',align:'right'">Average Peak Salary ($)</th>
+                        <th data-options="field:'TenYRROI', align:'right'">10-Year ROI Score</th>
+                    </tr>
+                </thead>
             </table>
         </div>
     </div>
@@ -1325,20 +1012,27 @@
                 contentType: 'application/json',
                 // Get state selected and convert the object to a string
                 // https://stackoverflow.com/questions/6323338/jquery-ajax-posting-json-to-webservice
-                data: JSON.stringify({ fips: $('#statelist :selected').val()}),
+                data: JSON.stringify({
+                    fips: $('#statelist :selected').val()
+                }),
                 success: function(dataT) {
 
                     // set the dimensions and margins of the graph
-                    var marginT = {top: 50, right: 20, bottom: 10, left: 80},
-                        widthT = $("#d3chartstable").width()-30 - marginT.left - marginT.right,
+                    var marginT = {
+                            top: 50,
+                            right: 20,
+                            bottom: 10,
+                            left: 80
+                        },
+                        widthT = $("#d3chartstable").width() - 30 - marginT.left - marginT.right,
                         heightT = 200 - marginT.top - marginT.bottom;
 
                     // set the ranges
                     var xT = d3.scaleBand()
-                              .range([0, widthT])
-                              .padding(0.1);
+                        .range([0, widthT])
+                        .padding(0.1);
                     var yT = d3.scaleLinear()
-                              .range([heightT, 0]);
+                        .range([heightT, 0]);
 
                     //Create custom tooltips based on this example: http://bl.ocks.org/Caged/6476579
                     //Wrap text: https://groups.google.com/forum/?fromgroups=#!topic/d3-js/GgFTf24ltjc
@@ -1356,28 +1050,38 @@
                     var svgT = d3.select("#tuition_chart").append("svg")
                         .attr("width", widthT + marginT.left + marginT.right)
                         .attr("height", heightT + marginT.top + marginT.bottom)
-                      .append("g")
+                        .append("g")
                         .attr("transform",
-                              "translate(" + marginT.left + "," + marginT.top + ")");
+                            "translate(" + marginT.left + "," + marginT.top + ")");
 
 
                     svgT.call(tipT);
 
                     // Scale the range of the data in the domains
-                    xT.domain(dataT.map(function(dT) { return dT.university_name; }));
-                    yT.domain([0, d3.max(dataT, function(dT) { return dT.tuition; })]);
+                    xT.domain(dataT.map(function(dT) {
+                        return dT.university_name;
+                    }));
+                    yT.domain([0, d3.max(dataT, function(dT) {
+                        return dT.tuition;
+                    })]);
 
                     // append the rectangles for the bar chart
                     svgT.selectAll(".bar")
                         .data(dataT)
                         .enter().append("rect")
-                          .attr("class", "bar")
-                          .attr("x", function(dT) { return xT(dT.university_name); })
-                          .attr("width", xT.bandwidth())
-                          .attr("y", function(dT) { return yT(dT.tuition); })
-                          .attr("height", function(dT) { return heightT - yT(dT.tuition); })
-                          .on('mouseover', tipT.show)
-                          .on('mouseout', tipT.hide);
+                        .attr("class", "bar")
+                        .attr("x", function(dT) {
+                            return xT(dT.university_name);
+                        })
+                        .attr("width", xT.bandwidth())
+                        .attr("y", function(dT) {
+                            return yT(dT.tuition);
+                        })
+                        .attr("height", function(dT) {
+                            return heightT - yT(dT.tuition);
+                        })
+                        .on('mouseover', tipT.show)
+                        .on('mouseout', tipT.hide);
 
                     // add the x Axis
                     svgT.append("g")
@@ -1392,7 +1096,7 @@
                     svgT.append("text")
                         .attr("transform", "rotate(-90)")
                         .attr("y", 0 - marginT.left)
-                        .attr("x",0 - (heightT / 2))
+                        .attr("x", 0 - (heightT / 2))
                         .attr("dy", "2em")
                         .style("text-anchor", "middle")
                         .text("Tuition (2015)");
@@ -1409,16 +1113,13 @@
                 error: function(e) {
                     console.log(e);
                 }
-             });
+            });
         });
-
-
     </script>
 
 
     <!--Populates D3 projected job openings bar chart based on major dropdown-->
     <script language="javascript">
-
         // Populates D3 Projected Jobs bar chart based on major dropdown
         $('#majorlist').change(function() {
             //Clear SVG canvas before drawing (in case user reselects )
@@ -1435,21 +1136,28 @@
                 // Get state selected and convert the object to a string
                 // https://stackoverflow.com/questions/6323338/jquery-ajax-posting-json-to-webservice
 
-                data: JSON.stringify({ cip: $('#majorlist :selected').val()}),
+                data: JSON.stringify({
+                    cip: $('#majorlist :selected').val()
+                }),
 
                 success: function(dataJ) {
 
                     // set the dimensions and margins of the graph
-                    var marginJ = {top: 50, right: 20, bottom: 10, left: 80},
-                        widthJ = $("#d3chartstable").width()-30 - marginJ.left - marginJ.right,
+                    var marginJ = {
+                            top: 50,
+                            right: 20,
+                            bottom: 10,
+                            left: 80
+                        },
+                        widthJ = $("#d3chartstable").width() - 30 - marginJ.left - marginJ.right,
                         heightJ = 200 - marginJ.top - marginJ.bottom;
 
                     // set the ranges
                     var xJ = d3.scaleBand()
-                              .range([0, widthJ])
-                              .padding(0.1);
+                        .range([0, widthJ])
+                        .padding(0.1);
                     var yJ = d3.scaleLinear()
-                              .range([heightJ, 0]);
+                        .range([heightJ, 0]);
 
                     //Create custom tooltips based on this example: http://bl.ocks.org/Caged/6476579
                     //Wrap text: https://groups.google.com/forum/?fromgroups=#!topic/d3-js/GgFTf24ltjc
@@ -1467,28 +1175,38 @@
                     var svgJ = d3.select("#jobs_chart").append("svg")
                         .attr("width", widthJ + marginJ.left + marginJ.right)
                         .attr("height", heightJ + marginJ.top + marginJ.bottom)
-                      .append("g")
+                        .append("g")
                         .attr("transform",
-                              "translate(" + marginJ.left + "," + marginJ.top + ")");
+                            "translate(" + marginJ.left + "," + marginJ.top + ")");
 
 
                     svgJ.call(tipJ);
 
                     // Scale the range of the data in the domains
-                    xJ.domain(dataJ.map(function(dJ) { return dJ.area_name; }));
-                    yJ.domain([0, d3.max(dataJ, function(dJ) { return dJ.jobs; })]);
+                    xJ.domain(dataJ.map(function(dJ) {
+                        return dJ.area_name;
+                    }));
+                    yJ.domain([0, d3.max(dataJ, function(dJ) {
+                        return dJ.jobs;
+                    })]);
 
                     // append the rectangles for the bar chart
                     svgJ.selectAll(".bar")
                         .data(dataJ)
                         .enter().append("rect")
-                          .attr("class", "bar")
-                          .attr("x", function(dJ) { return xJ(dJ.area_name); })
-                          .attr("width", xJ.bandwidth())
-                          .attr("y", function(dJ) { return yJ(dJ.jobs); })
-                          .attr("height", function(dJ) { return heightJ - yJ(dJ.jobs); })
-                          .on('mouseover', tipJ.show)
-                          .on('mouseout', tipJ.hide);
+                        .attr("class", "bar")
+                        .attr("x", function(dJ) {
+                            return xJ(dJ.area_name);
+                        })
+                        .attr("width", xJ.bandwidth())
+                        .attr("y", function(dJ) {
+                            return yJ(dJ.jobs);
+                        })
+                        .attr("height", function(dJ) {
+                            return heightJ - yJ(dJ.jobs);
+                        })
+                        .on('mouseover', tipJ.show)
+                        .on('mouseout', tipJ.hide);
 
                     // add the x Axis
                     svgJ.append("g")
@@ -1503,7 +1221,7 @@
                     svgJ.append("text")
                         .attr("transform", "rotate(-90)")
                         .attr("y", 0 - marginJ.left)
-                        .attr("x",0 - (heightJ / 2))
+                        .attr("x", 0 - (heightJ / 2))
                         .attr("dy", "2em")
                         .style("text-anchor", "middle")
                         .text("Job Openings (2014)");
@@ -1522,28 +1240,28 @@
                 error: function(e) {
                     console.log(e);
                 }
-             });
+            });
         });
-
-
     </script>
 
     <script type="text/javascript">
-    //create D3 panel tabs and create on click event listener
-    $(function(){
-        var tabs = $('#d3chartstable').tabs().tabs('tabs');
-        for(var i=0; i<tabs.length; i++){
-            tabs[i].panel('options').tab.unbind().bind('onSelect',{index:i},function(e){
-                $('#d3chartstable').tabs('select', e.data.index);
-            });
-        }
-    });
+        //create D3 panel tabs and create on click event listener
+        $(function() {
+            var tabs = $('#d3chartstable').tabs().tabs('tabs');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].panel('options').tab.unbind().bind('onSelect', {
+                    index: i
+                }, function(e) {
+                    $('#d3chartstable').tabs('select', e.data.index);
+                });
+            }
+        });
     </script>
 
 
     <!--Google Maps API key for dev environment-->
-    <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAdPspKiEU_oN3E9aqYOsKY5kB72Uh4XvE&callback=initMap">
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAdPspKiEU_oN3E9aqYOsKY5kB72Uh4XvE&callback=initMap">
     </script>
-  </body>
+</body>
+
 </html>

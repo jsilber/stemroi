@@ -12,9 +12,6 @@ db = MySQL(app)
 def index():
     return render_template("index.html")
 
-@app.route("/playground")
-def playground():
-    return render_template("d3_playground.html")
 
 #Add methodology page
 #http://pythonhow.com/adding-more-pages-to-the-website/
@@ -22,35 +19,12 @@ def playground():
 def methods():
     return render_template('methods.html')
 
-# WORKING Flask function for Google Map University Points
-# @app.route('/api/unis', methods=['GET'])
-# def allUniversities():
-#     # Get a connected cursor
-#     cur = db.connection.cursor()
-#     # Execute query (from employees sample database: https://github.com/datacharmer/test_db)
-#     cur.execute('''SELECT * FROM university''')
-#     #Extract row headers
-#     row_headers = [x[0] for x in cur.description]
-#     # Fetch all from the cursor
-#     rv = cur.fetchall()
-#     # Create an empty list we can append to
-#     payload = []
-#     # Based on https://stackoverflow.com/questions/43796423/python-converting-mysql-query-result-to-json
-#     for result in rv:
-#         payload.append(dict(zip(row_headers,result)))
-#
-#     # Convert list of dict to JSON and send response code 200
-#     # Based on https://en.wikipedia.org/wiki/List_of_HTTP_status_codes. Look for 200
-#     return jsonify(payload), 200
 
-# EXPERIMENTAL GOOGLE MAPS ENDPOINT
+#GOOGLE MAPS ENDPOINT
 @app.route('/api/unis/<fips>', methods=['GET'])
 def allUniversities(fips):
-    #if request.is_json:
-    # Get JSON sent
-    #content = request.get_json()
-    #print(content)
-    # Check to see if the field(s) we are looking for exist
+
+    # Check to see if the field exist
     if 'fips':
 
         cur = db.connection.cursor()
@@ -75,7 +49,7 @@ def allStatenamesGet():
     cur.execute("SELECT state_fips, area_name FROM state_abrev")
     payload = []
     for row in cur:
-        #row_data = {'id':row[0], 'state':row[1]}
+
         payload.append({'fips':row[0],'state':row[1]})
 
     return jsonify(payload), 200
@@ -86,7 +60,6 @@ def selectUnis():
     if request.is_json:
         # Get JSON sent
         content = request.get_json()
-        #print(content)
         # Check to see if the field(s) we are looking for exist
         if 'fips' in content:
             # Get the state value
@@ -114,9 +87,9 @@ def selectMajor():
     if request.is_json:
         # Get JSON sent
         content = request.get_json()
-        #print(content)
+
         # Check to see if the field(s) we are looking for exist
-        # TODO: COME BACK TO THIS
+
         if 'unitid' in content:
             # Get the university value
             unitid = content['unitid']
@@ -162,15 +135,14 @@ def avgROI(cip):
             plrow['AvePeak'] = 'N/A'
             all_greater_than_zero = False
         else:
-            plrow['AvePeak'] = int(row[3]) #'${0:,.2f}'.format(row[3])
+            plrow['AvePeak'] = int(row[3])
         if row[4] == 0.00 or not all_greater_than_zero:
             plrow['TenYRROI'] = 'N/A'
         else:
             plrow['TenYRROI'] = row[4]
-        # (((ROUND(AVG(js.a_pct10),2))+(((ROUND(AVG(js.a_pct90),2))-(ROUND(AVG(js.a_pct10),2)))/43)*10))/(ROUND(AVG(u.tuition),2)) as roi10yr
+
         payload.append(plrow)
-        # See https://stackoverflow.com/questions/455612/limiting-floats-to-two-decimal-points
-        # payload.append({'State':str(row[0]), 'AveTuition': '${0:.2f}'.format(row[1]), 'AveStart':'${0:.2f}'.format(row[2]), 'AvePeak':'${0:.2f}'.format(row[3]), '10YRROI':'{0:.2f}'.format(row[4])})
+
     return jsonify(payload), 200
 
 # Flask function for D3 bar chart - Compare Tuition within State selected
@@ -231,7 +203,7 @@ def jobChart():
             return jsonify({"errors":"Malformed JSON or incorrect format"}), 400
     else:
         return jsonify({"errors":"Malformed JSON or incorrect format"}), 400
-    #print(payload)
+
     return jsonify(payload), 200
 
 # Flask function for university ROI
@@ -288,7 +260,7 @@ def universityROI():
 # Endpoint for percentage of graduates vs open jobs
 @app.route('/api/grads/<cip>', methods=['GET'])
 def jobsPercent(cip):
-    #print(content)
+
     if 'cip':
         cur = db.connection.cursor()
 
@@ -327,7 +299,7 @@ def jobsPercent(cip):
     else:
         # If cip is not provided
         return jsonify({"errors":"Missing CIP in URL"}), 400
-    # print(payload)
+    
     return jsonify(payload), 200
 
 if __name__ == "__main__":
@@ -347,6 +319,3 @@ if __name__ == "__main__":
         app.config['APPLICATION_ROOT']: app,
     })
     run_simple('localhost', 5000, application, use_reloader=True)
-
-#Use this example once I have more than one paramenter
-#cur.execute("SELECT stemroidb.university.university_name FROM stemroidb.university INNER JOIN stemroidb.state_abrev ON stemroidb.university.state_fips=stemroidb.state_abrev.state_fips WHERE stemroidb.state_abrev.area_name = '{0}' AND school = '{1}'".format(state, uni))

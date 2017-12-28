@@ -133,7 +133,7 @@ vi /etc/hosts
 # and https://certbot.eff.org/all-instructions/#ubuntu-16-04-xenial-apache
 # Follow instructions on digitalocean.com (first link); use the following
 # for generating the cert in Step 2:
-sudo certbot certonly --standalone --preferred-challenges tls-sni -d jackberrystudio.net -d jackberrystudio.com
+sudo certbot certonly --apache --preferred-challenges tls-sni -d jackberrystudio.net -d jackberrystudio.com
 # Use jackberrystudio@gmail.com when prompted for an email
 # Agree to terms of service, but do not agree to sharing infor with EFF
 # The following is printed out:

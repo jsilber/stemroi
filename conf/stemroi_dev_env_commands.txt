@@ -62,6 +62,10 @@ mkproject <project_name>
 # To make a new Python 3 project in PROJECT_HOME:
 mkproject -p /usr/local/bin/python3 <project_name>
 
+# To add an existing Python project to virtualenvwrapper, place code directory
+# in ~/Documents/work and then:
+mkvirtualenv -a ~/Documents/work/<project_name> <project_name>
+
 # To delete a project but keep the project folder in PROJECT_HOME:
 rmvirtualenv <project_name>
 
